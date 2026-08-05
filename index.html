@@ -4,32 +4,22 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ABISO | Darangan Station 01</title>
-    
-    <!-- PWA Link & Favicon -->
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0038A8">
-    <link rel="icon" type="image/png" href="logo.png">
-    <link rel="apple-touch-icon" href="logo.png">
-    
-    <!-- External Fonts and Chart.js -->
+    <!-- Chart.js & Fonts -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- CSS Link -->
+    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="app-container">
-    <!-- SIDEBAR (Desktop) -->
+    <!-- --- SIDEBAR (Desktop) --- -->
     <aside class="sidebar">
-        <div style="margin-bottom: 40px; display: flex; align-items: center; gap: 15px;">
-            <img src="logo.png" alt="ABISO Logo" style="width: 50px; height: 50px; object-fit: contain;">
-            <div>
-                <h1 style="font-weight: 900; font-size: 32px; color: var(--rizal-blue); margin: 0; line-height: 1;">ABISO</h1>
-                <span style="font-size: 11px; font-weight: 800; color: var(--text-sub);">DARANGAN STATION BD-01</span>
-            </div>
+        <div style="margin-bottom: 45px;">
+            <h1 style="font-weight: 900; font-size: 38px; color: var(--rizal-blue); margin: 0;">ABISO</h1>
+            <span style="font-size: 12px; font-weight: 800; color: var(--text-sub);">DARANGAN STATION BD-01</span>
         </div>
         <button onclick="nav('water')" id="sd-water" class="nav-btn active"><svg viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="lang-en">Water Hub</span><span class="lang-tl">Tab ng Tubig</span></button>
         <button onclick="nav('air')" id="sd-air" class="nav-btn"><svg viewBox="0 0 24 24"><path d="M5 12h14M2 17h12M8 7h14"/></svg><span class="lang-en">Air Hub</span><span class="lang-tl">Tab ng Hangin</span></button>
@@ -40,18 +30,12 @@
     <div class="main-content">
         <header>
             <div class="header-inner">
-                <div style="display: flex; align-items: center; gap: 12px;">
-                    <img src="logo.png" alt="ABISO Logo" style="width: 42px; height: 42px; object-fit: contain; filter: brightness(0) invert(1);">
-                    <div>
-                        <h2 style="margin: 0; font-size: 24px; font-weight: 900;">ABISO Darangan</h2>
-                        <span style="font-size: 12px; font-weight: 700; opacity: 0.8;">BINANGONAN, RIZAL</span>
-                    </div>
-                </div>
+                <div><h2 style="margin: 0; font-size: 28px; font-weight: 900;">ABISO Darangan</h2><span style="font-size: 13px; font-weight: 700; opacity: 0.8;">BINANGONAN, RIZAL</span></div>
                 <div class="controls"><button class="btn-tool" onclick="toggleLang()" id="langBtn">Tagalog</button><button class="btn-tool" onclick="toggleTheme()" id="thBtn">🌙 Mode</button></div>
             </div>
         </header>
 
-        <!-- WATER PAGE -->
+        <!-- --- 💧 WATER PAGE --- -->
         <main id="water" class="page active">
             <div class="status-pill"><div class="pulse"></div><span class="lang-en">DIKE STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS PA</span></div>
             <div class="dashboard-grid">
@@ -114,7 +98,7 @@
             </div>
         </main>
 
-        <!-- AIR PAGE -->
+        <!-- --- 🌬️ AIR PAGE --- -->
         <section id="air" class="page">
             <div class="status-pill" style="background: var(--air-color);"><span class="lang-en">AIR: GOOD</span><span class="lang-tl">HANGIN: MABUTI</span></div>
             <div class="dashboard-grid">
@@ -185,12 +169,12 @@
             </div>
         </section>
 
-        <!-- LOGS PAGE -->
+        <!-- --- 📊 LOGS PAGE --- -->
         <section id="history" class="page">
             <div class="dashboard-grid">
                 <div class="card">
                     <span class="card-header">Station Battery & Backup</span>
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 12px; align-items: flex-end;">
+                    <div style="display:flex; justify-space-between; margin-bottom: 12px; align-items: flex-end;">
                         <div><span style="font-weight: 900; font-size: 32px; color: var(--solar-color);"><span id="cur-s">98</span>%</span><small style="font-weight: 800; color: var(--text-sub); margin-left: 5px;">BATT</small></div>
                         <span style="font-size: 13px; font-weight: 800; color: var(--rizal-blue);">STORAGE: DAY 3</span>
                     </div>
@@ -229,7 +213,7 @@
             </div>
         </section>
 
-        <!-- SERVICES / HELP PAGE -->
+        <!-- --- 🆘 SERVICES/HELP PAGE --- -->
         <section id="services" class="page">
             <div class="dashboard-grid">
                 <div class="card" style="background: var(--rizal-blue); color: white;">
@@ -279,6 +263,7 @@
     </nav>
 </div>
 
+<!-- Custom Logic -->
 <script src="script.js"></script>
 </body>
 </html>
