@@ -22,10 +22,11 @@ function toggleTheme() {
     document.getElementById('thBtn').innerText = isLight ? '🌙 Mode' : '☀️ Mode';
 }
 
-// Chart.js Setup
+// Optimized Chart.js Configuration
 const cfg = { 
     responsive: true, 
     maintainAspectRatio: false, 
+    animation: false, // Disables internal animation engines to reduce GPU load on low-end phones
     plugins: { legend: { display: false } }, 
     scales: { x: { display: false }, y: { display: false } } 
 };
@@ -78,19 +79,33 @@ function updateHistory(m) {
         document.getElementById('avg-w').innerText = "0.74m";
         document.getElementById('avg-a').innerText = "22";
     }
-    hw.update(); 
-    ha.update();
+    hw.update('none'); 
+    ha.update('none');
 }
 
-// Live Simulated Sensor Polling
+// Pause updates while user is actively scrolling to keep scrolling silky smooth
+let isScrolling = false;
+let scrollTimeout;
+
+window.addEventListener('scroll', () => {
+    isScrolling = true;
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => { isScrolling = false; }, 200);
+}, { passive: true });
+
 setInterval(() => {
+    if (isScrolling) return; // Skip updating charts during scroll frames
+
     const w = (0.75 + Math.random() * 0.3).toFixed(2); 
     const a = Math.floor(12 + Math.random() * 8);
+    
     document.getElementById('cur-w').innerText = w; 
     document.getElementById('cur-a').innerText = a;
+    
     lw.data.datasets[0].data.shift(); 
     lw.data.datasets[0].data.push(w); 
     lw.update('none');
+    
     la.data.datasets[0].data.shift(); 
     la.data.datasets[0].data.push(a); 
     la.update('none');
