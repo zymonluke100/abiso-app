@@ -59,45 +59,46 @@ database.ref('sensor_data').on('value', (snapshot) => {
     const data = snapshot.val();
     if (!data) return;
 
-    // Update Text
+    // 1. Update the numbers
     document.getElementById('cur-w').innerText = data.water.toFixed(2);
     document.getElementById('cur-a').innerText = data.air;
     document.getElementById('cur-s').innerText = data.solar;
 
-    // Update Live Charts
+    // 2. Update Charts
     lw.data.datasets[0].data.shift(); lw.data.datasets[0].data.push(data.water); lw.update('none');
     la.data.datasets[0].data.shift(); la.data.datasets[0].data.push(data.air); la.update('none');
 
-    // Update Solar Bar
+    // 3. WATER STATUS PILL LOGIC
+    const waterPill = document.getElementById('live-pill-w');
+    if (waterPill) {
+        if (data.water > 1.5) {
+            waterPill.style.background = 'var(--danger)';
+            waterPill.innerHTML = `<div class="pulse"></div><span class="lang-en">STATUS: DANGER</span><span class="lang-tl">STATUS: DELIKADO</span>`;
+        } else if (data.water > 1.1) {
+            waterPill.style.background = 'var(--warn)';
+            waterPill.innerHTML = `<div class="pulse"></div><span class="lang-en">STATUS: WATCH</span><span class="lang-tl">STATUS: BANTAYAN</span>`;
+        } else {
+            waterPill.style.background = 'var(--safe)';
+            waterPill.innerHTML = `<div class="pulse"></div><span class="lang-en">STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS PA</span>`;
+        }
+    }
+
+    // 4. AIR STATUS PILL LOGIC (This fixes your problem!)
+    const airPill = document.getElementById('live-pill-a');
+    if (airPill) {
+        if (data.air > 100) {
+            airPill.style.background = 'var(--danger)';
+            airPill.innerHTML = `<span class="lang-en">AIR: UNHEALTHY</span><span class="lang-tl">HANGIN: MASAMA</span>`;
+        } else if (data.air > 50) {
+            airPill.style.background = 'var(--warn)';
+            airPill.innerHTML = `<span class="lang-en">AIR: MODERATE</span><span class="lang-tl">HANGIN: KATAMTAMAN</span>`;
+        } else {
+            airPill.style.background = 'var(--safe)';
+            airPill.innerHTML = `<span class="lang-en">AIR: GOOD</span><span class="lang-tl">HANGIN: MABUTI</span>`;
+        }
+    }
+
+    // 5. Update Solar Bar
     const sFill = document.getElementById('solarFill');
     if(sFill) sFill.style.width = data.solar + "%";
-
-    // Global Status Logic
-    const waterPill = document.getElementById('live-pill-w');
-    if (data.water > 1.5) {
-        waterPill.style.background = 'var(--danger)';
-        waterPill.innerHTML = `<div class="pulse"></div><span class="lang-en">STATUS: DANGER</span><span class="lang-tl">STATUS: DELIKADO</span>`;
-    } else {
-        waterPill.style.background = 'var(--safe)';
-        waterPill.innerHTML = `<div class="pulse"></div><span class="lang-en">STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS PA</span>`;
-    }
 });
-
-// 4. MONTH HISTORY SELECTOR LOGIC
-function updateHistory() {
-    const wMonth = document.getElementById('wMonth').value;
-    const aMonth = document.getElementById('aMonth').value;
-    
-    // Simulate data changing based on month
-    const randomW = Array.from({length: 4}, () => (0.5 + Math.random()).toFixed(2));
-    hw.data.datasets[0].data = randomW;
-    hw.update();
-
-    const randomA = Array.from({length: 4}, () => Math.floor(10 + Math.random() * 30));
-    ha.data.datasets[0].data = randomA;
-    ha.update();
-
-    // Simple summary update
-    const wSum = document.getElementById('w-summary-text');
-    wSum.innerHTML = `<span class="lang-en">Summary: Data for ${wMonth.toUpperCase()} is currently safe.</span><span class="lang-tl">Ulat: Ang tubig para sa buwan ng ${wMonth.toUpperCase()} ay ligtas.</span>`;
-}
