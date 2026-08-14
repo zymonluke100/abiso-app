@@ -5,20 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ABISO | Darangan Station 01</title>
     
-    <!-- External CDN Scripts -->
+    <!-- External CDN Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         :root {
             --rizal-blue: #0038A8; --rizal-bg: #F0F4FF; --bg: #F8F9FC; --card: #FFFFFF;
             --text: #1A1C1E; --text-sub: #6C757D; --safe: #28A745; --alert: #F1C40F;
-            --warn: #FF9800; --danger: #DC3545; --air-color: #00897B; --solar-color: #E67E22;
+            --warn: #FF9800; --danger: #DC3545; --severe: #8E44AD;
+            --air-color: #00897B; --solar-color: #E67E22;
             --nav-bg: #FFFFFF; --nav-border: #E5E7EB;
         }
         [data-theme="dark"] {
@@ -34,11 +35,11 @@
         /* Desktop Sidebar */
         aside.sidebar { 
             width: 280px; background: var(--nav-bg); border-right: 1px solid var(--nav-border);
-            display: none; flex-direction: column; padding: 30px 20px; position: sticky; top: 0; height: 100vh; z-index: 100;
+            display: none; flex-direction: column; padding: 30px 20px; position: sticky; top: 0; height: 100vh; z-index: 100; flex-shrink: 0;
         }
         .main-content { flex: 1; display: flex; flex-direction: column; padding-bottom: 90px; }
 
-        /* Mobile Bottom Nav */
+        /* Mobile Bottom Navigation */
         nav.mobile-nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; 
             background: var(--nav-bg); display: flex; justify-content: space-around; 
@@ -67,15 +68,25 @@
         }
         .header-inner { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; }
         
+        .conn-pill {
+            font-size: 10px; font-weight: 800; padding: 4px 10px; border-radius: 20px;
+            background: rgba(255,255,255,0.15); display: inline-flex; align-items: center; gap: 6px;
+            margin-top: 4px; letter-spacing: 0.5px;
+        }
+        .conn-dot { width: 6px; height: 6px; border-radius: 50%; background: #28A745; }
+        .conn-pill.offline .conn-dot { background: #DC3545; }
+        
         .btn-tool { 
             background: rgba(255,255,255,0.22); border: 1px solid rgba(255,255,255,0.3); 
             color: white; padding: 8px 14px; border-radius: 10px; font-size: 12px; 
             font-weight: 800; cursor: pointer;
         }
+        .btn-tool:active { transform: scale(0.96); }
 
         /* Page Layout */
         .page { display: none; padding: 18px; max-width: 1200px; margin: 0 auto; width: 100%; }
-        .page.active { display: block; }
+        .page.active { display: block; animation: fadeIn 0.2s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
         /* Cards & Widgets */
         .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
@@ -87,8 +98,7 @@
         .pulse { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse-anim 2s infinite; }
         @keyframes pulse-anim { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-        /* Chart Canvas Constraints - fixes invisible chart bugs */
-        .chart-box { position: relative; height: 200px; width: 100%; margin: 15px 0; }
+        .chart-box { position: relative; height: 180px; width: 100%; margin: 12px 0; }
         
         .integrated-guide { border-top: 1px solid rgba(0,0,0,0.08); margin-top: 15px; padding-top: 15px; }
         .guide-row { display: flex; gap: 10px; margin-bottom: 10px; font-size: 13px; line-height: 1.4; align-items: flex-start; }
@@ -114,6 +124,11 @@
 
         #map-container { height: 260px; width: 100%; border-radius: 16px; margin-top: 10px; }
 
+        /* Toast Popup Notifications */
+        #toast-container { position: fixed; top: 20px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: var(--card); color: var(--text); padding: 14px 20px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-size: 13px; font-weight: 700; border-left: 5px solid var(--rizal-blue); pointer-events: auto; animation: toastIn 0.3s ease-out; }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
         @media (min-width: 1024px) {
             aside.sidebar { display: flex; }
             nav.mobile-nav { display: none; }
@@ -124,35 +139,38 @@
             .full-width { grid-column: span 2; }
         }
 
+        /* STRICT LANGUAGE DISPLAY RULES - NO MIXING */
         html[data-lang="en"] .lang-tl { display: none !important; }
         html[data-lang="tl"] .lang-en { display: none !important; }
     </style>
 </head>
 <body>
 
+<div id="toast-container"></div>
+
 <div class="app-container">
-    <!-- Desktop Navigation Sidebar -->
-    <aside class="sidebar">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar" role="tablist" aria-label="Desktop Navigation">
         <div>
             <h1 style="color:var(--rizal-blue); font-weight:900; font-size:28px;">ABISO</h1>
             <p style="font-size:10px; font-weight:800; color:var(--text-sub); margin-top:3px;">DARANGAN STATION BD-01</p>
         </div>
         <div style="margin-top:35px">
-            <button onclick="switchTab('water')" class="nav-btn active" id="sd-water">
+            <button onclick="nav('water')" class="nav-btn active" id="sd-water" role="tab" aria-selected="true">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                <span class="lang-en">Water Hub</span><span class="lang-tl">Level ng Tubig</span>
+                <span class="lang-en">Water Hub</span><span class="lang-tl">Antas ng Tubig</span>
             </button>
-            <button onclick="switchTab('air')" class="nav-btn" id="sd-air">
+            <button onclick="nav('air')" class="nav-btn" id="sd-air" role="tab" aria-selected="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
                 <span class="lang-en">Air Quality</span><span class="lang-tl">Kalidad ng Hangin</span>
             </button>
-            <button onclick="switchTab('history')" class="nav-btn" id="sd-history">
+            <button onclick="nav('history')" class="nav-btn" id="sd-history" role="tab" aria-selected="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-                <span class="lang-en">Station Logs</span><span class="lang-tl">Ulat at Logs</span>
+                <span class="lang-en">Station Logs</span><span class="lang-tl">Talaan ng Istasyon</span>
             </button>
-            <button onclick="switchTab('services')" class="nav-btn" id="sd-services">
+            <button onclick="nav('services')" class="nav-btn" id="sd-services" role="tab" aria-selected="false">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
-                <span class="lang-en">Evacuation & Help</span><span class="lang-tl">Tulong at Evacuation</span>
+                <span class="lang-en">Evacuation & Help</span><span class="lang-tl">Tulong at Likasan</span>
             </button>
         </div>
     </aside>
@@ -162,7 +180,11 @@
             <div class="header-inner">
                 <div>
                     <h2 style="font-size:20px;">ABISO Darangan</h2>
-                    <span style="font-size:10px; font-weight:700; opacity:0.8;">BINANGONAN, RIZAL</span>
+                    <div class="conn-pill" id="conn-pill">
+                        <span class="conn-dot"></span>
+                        <span id="conn-text-en" class="lang-en">STREAM: LIVE</span>
+                        <span id="conn-text-tl" class="lang-tl">KONEKSIYON: AKTIBO</span>
+                    </div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn-tool" onclick="toggleLang()" id="langBtn" type="button">Tagalog</button>
@@ -171,23 +193,27 @@
             </div>
         </header>
 
-        <!-- --- 💧 WATER LEVEL TAB --- -->
-        <main id="water" class="page active">
-            <div id="live-pill-w" class="status-pill"><div class="pulse"></div><span id="txt-pill-w">DIKE STATUS: NORMAL</span></div>
+        <!-- --- 💧 WATER LEVEL VIEW --- -->
+        <main id="water" class="page active" role="tabpanel">
+            <div id="live-pill-w" class="status-pill">
+                <div class="pulse"></div>
+                <span class="lang-en" id="txt-pill-w-en">DIKE STATUS: NORMAL</span>
+                <span class="lang-tl" id="txt-pill-w-tl">KATAYUAN SA DIKE: NORMAL AT LIGTAS</span>
+            </div>
             <div class="dashboard-grid">
                 <div class="card">
                     <span class="card-header lang-en">Live Water Level Telemetry</span>
-                    <span class="card-header lang-tl">Live na Lebel ng Tubig</span>
+                    <span class="card-header lang-tl">Kasalukuyang Antas ng Tubig</span>
                     <div style="color:var(--rizal-blue);"><span class="big-val" id="cur-w">0.82</span><span class="unit">m</span></div>
                     <div class="chart-box"><canvas id="liveWChart"></canvas></div>
                     
                     <div class="integrated-guide">
-                        <span class="card-header lang-en">Threshold Guide</span>
-                        <span class="card-header lang-tl">Gabay sa Antas ng Tubig</span>
-                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Normal (0.0 - 1.0m):</b><b class="lang-tl">Normal (0.0 - 1.0m):</b> <span class="lang-en">Safe level. No threat.</span><span class="lang-tl">Ligtas na lebel ng tubig.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><div><b class="lang-en">Alert (1.1 - 1.3m):</b><b class="lang-tl">Alerto (1.1 - 1.3m):</b> <span class="lang-en">Water rising. Stay updated.</span><span class="lang-tl">Tumaas ang tubig. Maging handa.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.4 - 1.6m):</b><b class="lang-tl">Babala (1.4 - 1.6m):</b> <span class="lang-en">Prepare emergency bags.</span><span class="lang-tl">Ihanda ang emergency kit.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Critical (1.7m+):</b><b class="lang-tl">Delikado (1.7m+):</b> <span class="lang-en">Evacuate immediately!</span><span class="lang-tl">Lumikas na po agad!</span></div></div>
+                        <span class="card-header lang-en">Threshold Warning Guide</span>
+                        <span class="card-header lang-tl">Gabay sa Antas ng Babala</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Normal (0.0 - 1.0m):</b><b class="lang-tl">Ligtas (0.0 - 1.0m):</b> <span class="lang-en">Safe water level. No flood threat.</span><span class="lang-tl">Ligtas ang antas ng tubig. Walang banta ng baha.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><div><b class="lang-en">Alert (1.1 - 1.3m):</b><b class="lang-tl">Alerto (1.1 - 1.3m):</b> <span class="lang-en">Water level rising. Stay alert.</span><span class="lang-tl">Tumataas ang tubig. Maging mapagmatyag.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.4 - 1.6m):</b><b class="lang-tl">Babala (1.4 - 1.6m):</b> <span class="lang-en">Prepare emergency bags and supplies.</span><span class="lang-tl">Ihanda ang emergency grab bag at kagamitan.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Critical (1.7m+):</b><b class="lang-tl">Panganib (1.7m+):</b> <span class="lang-en">Immediate evacuation required!</span><span class="lang-tl">Lumikas na po agad sa itinalagang evacuation center!</span></div></div>
                     </div>
                 </div>
 
@@ -204,35 +230,38 @@
                         <option value="6" selected>July 2026</option>
                     </select>
                     <div class="stats-mini">
-                        <div class="stat-box"><span>AVERAGE</span><b id="avg-w">0.74m</b></div>
-                        <div class="stat-box"><span>PEAK HEIGHT</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div>
+                        <div class="stat-box"><span class="lang-en">AVERAGE</span><span class="lang-tl">KATAMTAMAN</span><b id="avg-w">0.74m</b></div>
+                        <div class="stat-box"><span class="lang-en">PEAK HEIGHT</span><span class="lang-tl">PINAKAMATAAS</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div>
                     </div>
-                    <div class="summary-note" id="w-summary">
+                    <div class="summary-note">
                         <span class="lang-en">Summary: Water levels stayed within safe limits during this cycle.</span>
-                        <span class="lang-tl">Ulat: Naging maayos at ligtas ang tubig sa nakalipas na buwan.</span>
+                        <span class="lang-tl">Buod: Naging maayos at ligtas ang tubig sa buong buwan.</span>
                     </div>
                     <div class="chart-box"><canvas id="histWChart"></canvas></div>
                 </div>
             </div>
         </main>
 
-        <!-- --- 🌬️ AIR QUALITY TAB --- -->
-        <section id="air" class="page">
-            <div id="live-pill-a" class="status-pill" style="background:var(--safe)"><span id="txt-pill-a">AIR QUALITY: GOOD</span></div>
+        <!-- --- 🌬️ AIR QUALITY VIEW --- -->
+        <section id="air" class="page" role="tabpanel">
+            <div id="live-pill-a" class="status-pill" style="background:var(--safe)">
+                <span class="lang-en" id="txt-pill-a-en">AIR QUALITY: GOOD</span>
+                <span class="lang-tl" id="txt-pill-a-tl">KALIDAD NG HANGIN: MAAYOS</span>
+            </div>
             <div class="dashboard-grid">
                 <div class="card">
                     <span class="card-header lang-en">Live Ambient PM2.5 Index</span>
-                    <span class="card-header lang-tl">Live na Index ng Hangin (PM2.5)</span>
+                    <span class="card-header lang-tl">Kasalukuyang Kalidad ng Hangin (PM2.5)</span>
                     <div style="color:var(--air-color);"><span class="big-val" id="cur-a">22</span><span class="unit">AQI</span></div>
                     <div class="chart-box"><canvas id="liveAChart"></canvas></div>
                     
                     <div class="integrated-guide">
                         <span class="card-header lang-en">Health Advisories</span>
                         <span class="card-header lang-tl">Gabay sa Kalusugan</span>
-                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b>0 - 50: Good.</b> <span class="lang-en">Safe for outdoor exertion.</span><span class="lang-tl">Malinis at ligtas ang hangin.</span></p></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><p><b>51 - 100: Moderate.</b> <span class="lang-en">Sensitive individuals take caution.</span><span class="lang-tl">Katamtaman. Mag-ingat ang may hika.</span></p></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><p><b>101 - 150: Unhealthy (Sensitive).</b> <span class="lang-en">Wear face masks along dike road.</span><span class="lang-tl">Magsuot ng mask kapag dadaan.</span></p></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b>151+: Unhealthy.</b> <span class="lang-en">High pollution. Stay indoors.</span><span class="lang-tl">Hindi ligtas. Manatili sa loob.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b class="lang-en">0 - 50: Good.</b><b class="lang-tl">0 - 50: Maayos.</b> <span class="lang-en">Safe for outdoor exertion.</span><span class="lang-tl">Ligtas para sa mga aktibidad sa labas.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><p><b class="lang-en">51 - 100: Moderate.</b><b class="lang-tl">51 - 100: Katamtaman.</b> <span class="lang-en">Sensitive individuals take caution.</span><span class="lang-tl">Mag-ingat ang mga may hika o alerdyi.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><p><b class="lang-en">101 - 150: Unhealthy (Sensitive).</b><b class="lang-tl">101 - 150: Hindi Ligtas sa May Sakit.</b> <span class="lang-en">Wear face masks along the dike road.</span><span class="lang-tl">Magsuot ng face mask habang dumaraan sa dike.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b class="lang-en">151+: Unhealthy.</b><b class="lang-tl">151+: Mapanganib.</b> <span class="lang-en">High pollution. Stay indoors.</span><span class="lang-tl">Mataas ang polusyon. Manatili sa loob ng bahay.</span></p></div>
                     </div>
                 </div>
 
@@ -240,128 +269,174 @@
                     <span class="card-header lang-en">Monthly Air Trends</span>
                     <span class="card-header lang-tl">Buwanang Ulat ng Hangin</span>
                     <div class="stats-mini">
-                        <div class="stat-box"><span>AVERAGE AQI</span><b>22</b></div>
-                        <div class="stat-box"><span>PEAK AQI</span><b style="color:var(--air-color)">38</b></div>
+                        <div class="stat-box"><span class="lang-en">AVERAGE AQI</span><span class="lang-tl">KATAMTAMANG AQI</span><b>22</b></div>
+                        <div class="stat-box"><span class="lang-en">PEAK AQI</span><span class="lang-tl">PINAKAMATAAS</span><b style="color:var(--air-color)">38</b></div>
+                    </div>
+                    <div class="summary-note">
+                        <span class="lang-en">Summary: Particulate levels remained optimal due to seasonal wind conditions.</span>
+                        <span class="lang-tl">Buod: Naging malinis ang simoy ng hangin sa baybayin ng Darangan.</span>
                     </div>
                     <div class="chart-box"><canvas id="histAChart"></canvas></div>
                 </div>
             </div>
         </section>
 
-        <!-- --- 📊 LOGS TAB --- -->
-        <section id="history" class="page">
+        <!-- --- 📊 LOGS VIEW --- -->
+        <section id="history" class="page" role="tabpanel">
             <div class="dashboard-grid">
                 <div class="card">
                     <span class="card-header lang-en">Hardware Telemetry</span>
                     <span class="card-header lang-tl">Kondisyon ng Hardware</span>
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <div><span style="font-weight:900; font-size:30px; color:var(--solar-color);"><span id="cur-s">98</span>%</span><small style="font-weight:800; color:var(--text-sub); margin-left:6px;">BATT</small></div>
-                        <span style="font-size:11px; font-weight:800; color:var(--safe);">SOLAR: 13.4V</span>
+                        <div><span style="font-weight:900; font-size:30px; color:var(--solar-color);"><span id="cur-s">98</span>%</span><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-en">BATT</small><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-tl">BATERIS</small></div>
+                        <span style="font-size:11px; font-weight:800; color:var(--safe);" class="lang-en">SOLAR: 13.4V</span>
+                        <span style="font-size:11px; font-weight:800; color:var(--safe);" class="lang-tl">SOLAR: 13.4V (NAGCHA-CHARGE)</span>
                     </div>
                     <div class="track"><div class="fill" id="solarFill" style="background:var(--solar-color);"></div></div>
                     
                     <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="stat-box" style="padding:10px;"><span>Ultrasonic Sensor</span><b style="font-size:13px; color:var(--safe);">ONLINE</b></div>
-                        <div class="stat-box" style="padding:10px;"><span>PM2.5 Sensor</span><b style="font-size:13px; color:var(--safe);">ONLINE</b></div>
+                        <div class="stat-box" style="padding:10px;"><span class="lang-en">Ultrasonic Sensor</span><span class="lang-tl">Sensor ng Tubig</span><b style="font-size:13px; color:var(--safe);">ONLINE</b></div>
+                        <div class="stat-box" style="padding:10px;"><span class="lang-en">PM2.5 Sensor</span><span class="lang-tl">Sensor ng Hangin</span><b style="font-size:13px; color:var(--safe);">ONLINE</b></div>
                     </div>
                 </div>
 
                 <div class="card">
-                    <span class="card-header lang-en">System Activity</span>
-                    <span class="card-header lang-tl">Gawain sa Sistema</span>
-                    <div style="font-size:13px; color:var(--text-sub); line-height:1.5;">
-                        <p>• <b>Supabase Cloud Connection:</b> Active & Listening</p>
-                        <p style="margin-top:8px;">• <b>Telemetry Protocol:</b> REST API / WebSockets</p>
-                        <p style="margin-top:8px;">• <b>Station:</b> Darangan Dike Stand 01</p>
+                    <span class="card-header lang-en">System Diagnostics</span>
+                    <span class="card-header lang-tl">Pagsusuri sa Sistema</span>
+                    <div style="font-size:13px; color:var(--text-sub); line-height:1.7;">
+                        <p class="lang-en">• <b>Supabase Cloud Connection:</b> <span style="color:var(--safe); font-weight:bold;">Active & Synchronized</span></p>
+                        <p class="lang-tl">• <b>Koneksiyon sa Supabase Cloud:</b> <span style="color:var(--safe); font-weight:bold;">Aktibo at Nakakabit</span></p>
+                        
+                        <p class="lang-en">• <b>Telemetry Protocol:</b> REST API / WebSockets</p>
+                        <p class="lang-tl">• <b>Protokol ng Datos:</b> REST API / WebSockets</p>
+                        
+                        <p class="lang-en">• <b>Station:</b> Darangan Dike Stand BD-01</p>
+                        <p class="lang-tl">• <b>Lokasyon ng Istasyon:</b> Darangan Dike Stand BD-01</p>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- --- 🆘 EVACUATION & HELP TAB --- -->
-        <section id="services" class="page">
+        <!-- --- 🆘 EVACUATION & HELP VIEW --- -->
+        <section id="services" class="page" role="tabpanel">
             <div class="dashboard-grid">
                 <div class="card" style="background:var(--rizal-blue); color:white;">
                     <h3 class="lang-en">SMS Early Warning Registration</h3>
-                    <h3 class="lang-tl">Mag-rehistro sa SMS Text Alert</h3>
+                    <h3 class="lang-tl">Pagpapatala sa SMS Text Alert</h3>
+                    
+                    <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-en">Receive instant text alerts directly when dike water level reaches warning threshold.</p>
+                    <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-tl">Makatanggap ng agarang text alert sa cellphone kapag tumaas ang tubig sa dike.</p>
+                    
                     <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX">
-                    <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">REGISTER PHONE NUMBER</button>
+                    <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">
+                        <span class="lang-en">REGISTER PHONE NUMBER</span>
+                        <span class="lang-tl">IPATALA ANG NUMERO</span>
+                    </button>
                 </div>
 
                 <div class="card">
                     <span class="card-header lang-en">Emergency Hotlines</span>
                     <span class="card-header lang-tl">Mga Numero sa Emergency</span>
-                    <a href="tel:911" class="contact-card"><div><b>B-RESCUE</b><br><small>911 / Direct Line</small></div><div class="call-btn">CALL</div></a>
-                    <a href="tel:0284511647" class="contact-card"><div><b>Barangay Hall</b><br><small>Darangan Operations</small></div><div class="call-btn">CALL</div></a>
+                    <a href="tel:911" class="contact-card"><div><b>B-RESCUE</b><br><small>911 / Direct Emergency Line</small></div><div class="call-btn"><span class="lang-en">CALL</span><span class="lang-tl">TAWAG</span></div></a>
+                    <a href="tel:0284511647" class="contact-card"><div><b class="lang-en">Barangay Hall</b><b class="lang-tl">Bulwagan ng Barangay</b><br><small>Darangan Operations Desk</small></div><div class="call-btn"><span class="lang-en">CALL</span><span class="lang-tl">TAWAG</span></div></a>
                 </div>
 
                 <div class="card full-width">
                     <span class="card-header lang-en">Interactive Evacuation Route & Shelters</span>
-                    <span class="card-header lang-tl">Mapa ng mga Evacuation Center</span>
+                    <span class="card-header lang-tl">Mapa ng mga Evacuation Center at Likasan</span>
                     <div id="map-container"></div>
                     
                     <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                         <div class="evac-card">
                             <p class="evac-title">1. Darangan Elementary School</p>
-                            <p class="evac-desc lang-en">Primary flood evacuation center.</p>
-                            <p class="evac-desc lang-tl">Pangunahing evacuation center.</p>
+                            <p class="evac-desc lang-en">Primary evacuation site during typhoons.</p>
+                            <p class="evac-desc lang-tl">Pangunahing evacuation center kapag may bagyo.</p>
                         </div>
                         <div class="evac-card">
                             <p class="evac-title">2. Barangay Covered Court</p>
-                            <p class="evac-desc lang-en">Secondary relief operations center.</p>
-                            <p class="evac-desc lang-tl">Sentro ng relief distribution.</p>
+                            <p class="evac-desc lang-en">Secondary relief distribution operations center.</p>
+                            <p class="evac-desc lang-tl">Pangalawang sentro ng pamamahagi ng relief goods.</p>
                         </div>
                     </div>
                 </div>
 
                 <div class="card full-width">
                     <span class="card-header lang-en">Report an Incident or Hazard</span>
-                    <span class="card-header lang-tl">Mag-ulat ng Problema o Baha</span>
-                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Describe the hazard (e.g. rising water, clogged canal)..."></textarea>
-                    <button class="btn-main" onclick="sendReport()" type="button">SUBMIT TO DRRMO</button>
+                    <span class="card-header lang-tl">Mag-ulat ng Panganib o Baha</span>
+                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Ilarawan ang nakitang panganib (hal. baradong kanal, pag-apaw ng tubig)..."></textarea>
+                    <button class="btn-main" onclick="sendReport()" type="button">
+                        <span class="lang-en">SUBMIT TO DRRMO</span>
+                        <span class="lang-tl">IPADALA SA DRRMO</span>
+                    </button>
                 </div>
             </div>
         </section>
     </div>
 
     <!-- Mobile Navigation Bar -->
-    <nav class="mobile-nav">
-        <button onclick="switchTab('water')" class="nav-btn active" id="mb-water" type="button">
+    <nav class="mobile-nav" role="tablist" aria-label="Mobile Navigation">
+        <button onclick="nav('water')" class="nav-btn active" id="mb-water" role="tab" aria-selected="true" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-            <span>WATER</span>
+            <span class="lang-en">WATER</span><span class="lang-tl">TUBIG</span>
         </button>
-        <button onclick="switchTab('air')" class="nav-btn" id="mb-air" type="button">
+        <button onclick="nav('air')" class="nav-btn" id="mb-air" role="tab" aria-selected="false" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
-            <span>AIR</span>
+            <span class="lang-en">AIR</span><span class="lang-tl">HANGIN</span>
         </button>
-        <button onclick="switchTab('history')" class="nav-btn" id="mb-history" type="button">
+        <button onclick="nav('history')" class="nav-btn" id="mb-history" role="tab" aria-selected="false" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-            <span>LOGS</span>
+            <span class="lang-en">LOGS</span><span class="lang-tl">TALAAN</span>
         </button>
-        <button onclick="switchTab('services')" class="nav-btn" id="mb-services" type="button">
+        <button onclick="nav('services')" class="nav-btn" id="mb-services" role="tab" aria-selected="false" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
-            <span>HELP</span>
+            <span class="lang-en">HELP</span><span class="lang-tl">TULONG</span>
         </button>
     </nav>
 </div>
 
 <script>
-    // Global chart references
-    let lw = null, la = null, hw = null, ha = null;
-    let leafletMap = null;
+    // ========================================================
+    // 1. SUPABASE CLIENT INITIALIZATION
+    // ========================================================
+    const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
+    
+    let supabaseClient = null;
+    try {
+        if (typeof window.supabase !== 'undefined') {
+            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+        }
+    } catch (e) {
+        console.error("Supabase load error:", e);
+    }
 
-    // --- 1. GLOBAL NAVIGATION CONTROLLER ---
-    window.switchTab = function(pageId) {
+    // ========================================================
+    // 2. CORE UI CONTROLLERS
+    // ========================================================
+    window.showToast = function(msg) {
+        const container = document.getElementById('toast-container');
+        if (!container) return;
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.innerText = msg;
+        container.appendChild(toast);
+        setTimeout(() => { toast.remove(); }, 3500);
+    };
+
+    window.nav = function(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-selected', 'false');
+        });
         
         const targetPage = document.getElementById(pageId);
         if (targetPage) targetPage.classList.add('active');
         
         const mb = document.getElementById('mb-' + pageId);
         const sd = document.getElementById('sd-' + pageId);
-        if (mb) mb.classList.add('active');
-        if (sd) sd.classList.add('active');
+        if (mb) { mb.classList.add('active'); mb.setAttribute('aria-selected', 'true'); }
+        if (sd) { sd.classList.add('active'); sd.setAttribute('aria-selected', 'true'); }
 
         if (pageId === 'services') {
             setTimeout(initEvacMap, 150);
@@ -369,71 +444,83 @@
         window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
-    // --- 2. LANGUAGE AND THEME CONTROLLERS ---
     window.toggleLang = function() {
         const root = document.documentElement;
-        const currentLang = root.getAttribute('data-lang') || 'en';
-        const newLang = currentLang === 'en' ? 'tl' : 'en';
-        root.setAttribute('data-lang', newLang);
-        document.getElementById('langBtn').innerText = newLang === 'en' ? 'Tagalog' : 'English';
+        const isEng = (root.getAttribute('data-lang') || 'en') === 'en';
+        const nextLang = isEng ? 'tl' : 'en';
+        root.setAttribute('data-lang', nextLang);
+        document.getElementById('langBtn').innerText = nextLang === 'en' ? 'Tagalog' : 'English';
+        
+        const isTagalog = nextLang === 'tl';
+        document.getElementById('reportDesc').placeholder = isTagalog 
+            ? "Ilarawan ang nakitang panganib (hal. baradong kanal, pag-apaw ng tubig)..." 
+            : "Describe the hazard (e.g. rising water, clogged canal)...";
     };
 
     window.toggleTheme = function() {
         const root = document.documentElement;
-        const currentTheme = root.getAttribute('data-theme') || 'dark';
-        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-        root.setAttribute('data-theme', newTheme);
-        document.getElementById('thBtn').innerText = newTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+        const isLight = root.getAttribute('data-theme') === 'light';
+        root.setAttribute('data-theme', isLight ? 'dark' : 'light');
+        document.getElementById('thBtn').innerText = isLight ? '☀️ Light' : '🌙 Dark';
     };
 
-    // --- 3. CHART INITIALIZATION (Runs immediately upon DOM ready) ---
+    // ========================================================
+    // 3. CHART.JS CONFIGURATION
+    // ========================================================
+    let lw = null, la = null, hw = null, ha = null;
+
     function initAllCharts() {
-        const chartOptions = { 
-            responsive: true, 
-            maintainAspectRatio: false, 
-            animation: false, 
-            plugins: { legend: { display: false } }, 
-            scales: { x: { display: false }, y: { display: false } } 
-        };
+        try {
+            if (typeof Chart === 'undefined') return;
 
-        const ctxLW = document.getElementById('liveWChart');
-        if (ctxLW) {
-            lw = new Chart(ctxLW.getContext('2d'), { 
-                type: 'line', 
-                data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0.8, 0.82, 0.81, 0.83, 0.82, 0.82], borderColor: '#0038A8', fill: true, backgroundColor: 'rgba(0,56,168,0.1)', pointRadius: 0, tension: 0.3 }] }, 
-                options: chartOptions 
-            });
-        }
+            const chartOptions = { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                animation: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { display: false }, y: { display: false } } 
+            };
 
-        const ctxLA = document.getElementById('liveAChart');
-        if (ctxLA) {
-            la = new Chart(ctxLA.getContext('2d'), { 
-                type: 'line', 
-                data: { labels: [1,2,3,4,5,6], datasets: [{ data: [18, 19, 17, 21, 18, 22], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.1)', pointRadius: 0, tension: 0.3 }] }, 
-                options: chartOptions 
-            });
-        }
+            const ctxLW = document.getElementById('liveWChart');
+            if (ctxLW) {
+                lw = new Chart(ctxLW.getContext('2d'), { 
+                    type: 'line', 
+                    data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0.8, 0.82, 0.81, 0.83, 0.82, 0.82], borderColor: '#0038A8', fill: true, backgroundColor: 'rgba(0,56,168,0.1)', pointRadius: 0, tension: 0.3 }] }, 
+                    options: chartOptions 
+                });
+            }
 
-        const ctxHW = document.getElementById('histWChart');
-        if (ctxHW) {
-            hw = new Chart(ctxHW.getContext('2d'), { 
-                type: 'bar', 
-                data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [0.65, 0.95, 0.70, 1.10], backgroundColor: '#0038A8', borderRadius: 8 }] }, 
-                options: chartOptions 
-            });
-        }
+            const ctxLA = document.getElementById('liveAChart');
+            if (ctxLA) {
+                la = new Chart(ctxLA.getContext('2d'), { 
+                    type: 'line', 
+                    data: { labels: [1,2,3,4,5,6], datasets: [{ data: [18, 19, 17, 21, 18, 22], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.1)', pointRadius: 0, tension: 0.3 }] }, 
+                    options: chartOptions 
+                });
+            }
 
-        const ctxHA = document.getElementById('histAChart');
-        if (ctxHA) {
-            ha = new Chart(ctxHA.getContext('2d'), { 
-                type: 'line', 
-                data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, 
-                options: chartOptions 
-            });
+            const ctxHW = document.getElementById('histWChart');
+            if (ctxHW) {
+                hw = new Chart(ctxHW.getContext('2d'), { 
+                    type: 'bar', 
+                    data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [0.65, 0.95, 0.70, 1.10], backgroundColor: '#0038A8', borderRadius: 8 }] }, 
+                    options: chartOptions 
+                });
+            }
+
+            const ctxHA = document.getElementById('histAChart');
+            if (ctxHA) {
+                ha = new Chart(ctxHA.getContext('2d'), { 
+                    type: 'line', 
+                    data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, 
+                    options: chartOptions 
+                });
+            }
+        } catch (e) {
+            console.error('Chart creation error:', e);
         }
     }
 
-    // --- 4. MONTHLY REPOSITORY ---
     const monthlyHistory = {
         0: { w: [0.4, 0.5, 0.45, 0.6], avgW: '0.48m', peakW: '0.75m' },
         1: { w: [0.35, 0.4, 0.42, 0.5], avgW: '0.41m', peakW: '0.62m' },
@@ -454,7 +541,9 @@
         document.getElementById('peak-w').innerText = selected.peakW;
     };
 
-    // --- 5. TELEMETRY DISPLAY ---
+    // ========================================================
+    // 4. TELEMETRY RENDERING & ALERTS
+    // ========================================================
     function applyTelemetry(data) {
         if (!data) return;
         const water = parseFloat(data.water).toFixed(2);
@@ -478,54 +567,57 @@
         }
 
         const wPill = document.getElementById('live-pill-w');
-        const txtW = document.getElementById('txt-pill-w');
+        const txtW_EN = document.getElementById('txt-pill-w-en');
+        const txtW_TL = document.getElementById('txt-pill-w-tl');
+        
         if (water >= 1.7) {
             wPill.style.background = 'var(--danger)';
-            txtW.innerText = "DIKE STATUS: CRITICAL";
+            txtW_EN.innerText = "DIKE STATUS: CRITICAL (EVACUATE)";
+            txtW_TL.innerText = "KATAYUAN SA DIKE: PANGANIB (LUMIKAS)";
         } else if (water >= 1.4) {
             wPill.style.background = 'var(--warn)';
-            txtW.innerText = "DIKE STATUS: WARNING";
+            txtW_EN.innerText = "DIKE STATUS: WARNING (PREPARE)";
+            txtW_TL.innerText = "KATAYUAN SA DIKE: BABALA (MAGHANDA)";
         } else if (water >= 1.1) {
             wPill.style.background = 'var(--alert)';
-            txtW.innerText = "DIKE STATUS: ALERT";
+            txtW_EN.innerText = "DIKE STATUS: ALERT (WATCH)";
+            txtW_TL.innerText = "KATAYUAN SA DIKE: ALERTO (MAGMASID)";
         } else {
             wPill.style.background = 'var(--safe)';
-            txtW.innerText = "DIKE STATUS: NORMAL";
+            txtW_EN.innerText = "DIKE STATUS: NORMAL (SAFE)";
+            txtW_TL.innerText = "KATAYUAN SA DIKE: NORMAL AT LIGTAS";
         }
     }
 
-    // --- 6. SAFE SUPABASE CONNECTION ---
-    function initSupabase() {
-        try {
-            const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
-            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
-            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+    // ========================================================
+    // 5. SUPABASE REALTIME STREAM
+    // ========================================================
+    function startSupabaseSync() {
+        if (!supabaseClient) return;
 
-            supabase
-                .from('dike_data')
-                .select('*')
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .then(({ data }) => {
-                    if (data && data.length > 0) applyTelemetry(data[0]);
-                });
+        supabaseClient
+            .from('dike_data')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .then(({ data }) => {
+                if (data && data.length > 0) applyTelemetry(data[0]);
+            });
 
-            supabase.channel('public:dike_data')
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
-                    applyTelemetry(payload.new);
-                })
-                .subscribe();
-
-            window.supabaseClient = supabase;
-        } catch (e) {
-            console.error("Supabase init error:", e);
-        }
+        supabaseClient.channel('public:dike_data')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
+                applyTelemetry(payload.new);
+            })
+            .subscribe();
     }
 
-    // --- 7. EVACUATION MAP ---
+    // ========================================================
+    // 6. EVACUATION MAP LOADER
+    // ========================================================
+    let leafletMap = null;
     function initEvacMap() {
         const container = document.getElementById('map-container');
-        if (!container) return;
+        if (!container || typeof L === 'undefined') return;
 
         if (!leafletMap) {
             try {
@@ -536,48 +628,74 @@
                     attribution: '© OpenStreetMap'
                 }).addTo(leafletMap);
 
-                L.marker(daranganCoord).addTo(leafletMap).bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike");
-                L.marker([14.4820, 121.1810]).addTo(leafletMap).bindPopup("<b>Darangan Elementary School</b>");
-                L.marker([14.4750, 121.1760]).addTo(leafletMap).bindPopup("<b>Barangay Covered Court</b>");
+                L.marker(daranganCoord).addTo(leafletMap).bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Monitoring Point");
+                L.marker([14.4820, 121.1810]).addTo(leafletMap).bindPopup("<b>Darangan Elementary School</b><br>Primary Evacuation Center");
+                L.marker([14.4750, 121.1760]).addTo(leafletMap).bindPopup("<b>Barangay Covered Court</b><br>Relief Staging Area");
             } catch (err) {
-                console.error("Leaflet error:", err);
+                console.error("Leaflet initialization error:", err);
             }
         } else {
             leafletMap.invalidateSize();
         }
     }
 
-    // --- 8. SMS & REPORT FORMS ---
+    // ========================================================
+    // 7. VERIFIED DATABASE FORM DISPATCHERS
+    // ========================================================
     window.registerSMS = async function() {
         const phone = document.getElementById('subPhone').value.trim();
+        const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
+
         if (phone.length < 11) {
-            alert("Please enter a valid 11-digit mobile number.");
+            showToast(isTagalog ? "⚠️ Maglagay ng wastong 11-digit mobile number." : "⚠️ Please enter a valid 11-digit mobile number.");
             return;
         }
-        if (window.supabaseClient) {
-            await window.supabaseClient.from('sms_subscribers').insert([{ phone_number: phone }]);
+
+        if (!supabaseClient) {
+            showToast(isTagalog ? "❌ Hindi makakonekta sa database." : "❌ Cannot connect to database.");
+            return;
         }
-        alert("Mobile number " + phone + " successfully enrolled in ABISO alerts!");
-        document.getElementById('subPhone').value = "";
+
+        const { error } = await supabaseClient.from('sms_subscribers').insert([{ phone_number: phone }]);
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            showToast(isTagalog ? "❌ Bigo: " + error.message : "❌ Failed: " + error.message);
+        } else {
+            showToast(isTagalog ? "✅ Matagumpay na naitala ang iyong numero!" : "✅ Phone number enrolled in SMS alerts!");
+            document.getElementById('subPhone').value = "";
+        }
     };
 
     window.sendReport = async function() {
         const text = document.getElementById('reportDesc').value.trim();
+        const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
+
         if (!text) {
-            alert("Please describe the incident first.");
+            showToast(isTagalog ? "⚠️ Pakilagay muna ang detalye ng ulat." : "⚠️ Please describe the incident first.");
             return;
         }
-        if (window.supabaseClient) {
-            await window.supabaseClient.from('hazard_reports').insert([{ description: text }]);
+
+        if (!supabaseClient) {
+            showToast(isTagalog ? "❌ Hindi makakonekta sa database." : "❌ Cannot connect to database.");
+            return;
         }
-        alert("Report submitted to Barangay Darangan DRRMO desk.");
-        document.getElementById('reportDesc').value = "";
+
+        const { error } = await supabaseClient.from('hazard_reports').insert([{ description: text }]);
+
+        if (error) {
+            console.error("Supabase insert error:", error);
+            showToast(isTagalog ? "❌ Bigo: " + error.message : "❌ Failed: " + error.message);
+        } else {
+            showToast(isTagalog ? "✅ Naipadala ang iyong ulat sa DRRMO!" : "✅ Hazard report submitted to DRRMO desk!");
+            document.getElementById('reportDesc').value = "";
+        }
     };
 
-    // Initialize all components after document is loaded
+    // Initialize after DOM is ready
     document.addEventListener('DOMContentLoaded', () => {
         initAllCharts();
-        initSupabase();
+        startSupabaseSync();
     });
 </script>
 </body>
