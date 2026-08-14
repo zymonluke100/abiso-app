@@ -3,114 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ABISO | Darangan Station 01</title>
+    <title>ABISO | Darangan Station</title>
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
 <div class="app-container">
+    <!-- DESKTOP SIDEBAR -->
     <aside class="sidebar">
-        <div style="margin-bottom: 45px;">
-            <h1 style="font-weight: 900; font-size: 36px; color: var(--rizal-blue); margin: 0;">ABISO</h1>
-            <span style="font-size: 11px; font-weight: 800; color: var(--text-sub);">DARANGAN STATION BD-01</span>
+        <div class="sidebar-header">
+            <h1>ABISO</h1>
+            <span>DARANGAN STATION BD-01</span>
         </div>
-        <button onclick="nav('water')" id="sd-water" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span class="lang-en">Water Hub</span><span class="lang-tl">Level ng Tubig</span></button>
-        <button onclick="nav('air')" id="sd-air" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg><span class="lang-en">Air Hub</span><span class="lang-tl">Kalidad ng Hangin</span></button>
-        <button onclick="nav('history')" id="sd-history" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg><span class="lang-en">System Logs</span><span class="lang-tl">Log ng System</span></button>
-        <button onclick="nav('services')" id="sd-services" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg><span class="lang-en">Help Hub</span><span class="lang-tl">Tulong Hub</span></button>
+        <nav class="sidebar-nav">
+            <button onclick="nav('water')" id="sd-water" class="nav-btn active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
+                <span class="lang-en">Water Hub</span><span class="lang-tl">Tab ng Tubig</span>
+            </button>
+            <button onclick="nav('air')" id="sd-air" class="nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
+                <span class="lang-en">Air Hub</span><span class="lang-tl">Tab ng Hangin</span>
+            </button>
+            <button onclick="nav('history')" id="sd-history" class="nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+                <span class="lang-en">History Logs</span><span class="lang-tl">Logs at Data</span>
+            </button>
+            <button onclick="nav('services')" id="sd-services" class="nav-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
+                <span class="lang-en">Help Center</span><span class="lang-tl">Tulong Hub</span>
+            </button>
+        </nav>
     </aside>
 
     <div class="main-content">
         <header>
             <div class="header-inner">
-                <div><h2 style="margin: 0; font-size: 22px; font-weight: 900;">ABISO Darangan</h2><span style="font-size: 12px; font-weight: 700; opacity: 0.8;">BINANGONAN, RIZAL</span></div>
-                <div class="controls"><button class="btn-tool" onclick="toggleLang()" id="langBtn">Tagalog</button><button class="btn-tool" onclick="toggleTheme()" id="thBtn">🌙 Mode</button></div>
+                <div class="brand">
+                    <h2 class="lang-en">ABISO Darangan</h2>
+                    <h2 class="lang-tl">ABISO Darangan</h2>
+                    <p>STATION BD-01 • BINANGONAN</p>
+                </div>
+                <div class="controls">
+                    <button class="btn-tool" onclick="toggleLang()" id="langBtn">Tagalog</button>
+                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn">🌙 Mode</button>
+                </div>
             </div>
         </header>
 
+        <!-- 💧 WATER PAGE -->
         <main id="water" class="page active">
-            <div id="live-pill-w" class="status-pill"><div class="pulse"></div><span class="lang-en">STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS</span></div>
+            <div id="live-pill-w" class="status-pill"><div class="pulse"></div><span class="lang-en">STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS PA</span></div>
             <div class="dashboard-grid">
-                <div class="card" style="border-top: 8px solid var(--rizal-blue);">
-                    <span class="card-header lang-en">Live Water Level</span><span class="card-header lang-tl">Live na Level ng Tubig</span>
-                    <div style="color: var(--rizal-blue); margin-bottom: 20px;"><span class="big-val" id="cur-w">0.00</span><span class="unit">m</span></div>
+                <div class="card live-card">
+                    <span class="card-header lang-en">Real-Time Level</span><span class="card-header lang-tl">Live na Lebel</span>
+                    <div class="val-display"><span class="big-val" id="cur-w">0.00</span><span class="unit">m</span></div>
                     <div class="chart-box"><canvas id="liveWChart"></canvas></div>
                     <div class="integrated-guide">
-                        <div class="guide-step"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Safe (0-1.0m)</b><b class="lang-tl">Ligtas (0-1.0m)</b><p class="lang-tl">Normal ang tubig sa dike.</p></div></div>
-                        <div class="guide-step"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Danger (1.5m+)</b><b class="lang-tl">Delikado (1.5m+)</b><p class="lang-tl">Mataas ang tubig. Lumikas na.</p></div></div>
+                        <span class="guide-title lang-en">How to understand:</span><span class="guide-title lang-tl">Paano basahin:</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b class="lang-en">Safe (0-1.0m):</b><b class="lang-tl">Ligtas (0-1.0m):</b> <span class="lang-en">Dike is normal.</span><span class="lang-tl">Normal ang tubig.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b class="lang-en">Danger (1.5m+):</b><b class="lang-tl">Delikado (1.5m+):</b> <span class="lang-en">Evacuate now.</span><span class="lang-tl">Lumikas na agad.</span></p></div>
                     </div>
                 </div>
-                <div class="card">
-                    <span class="card-header lang-en">Monthly History</span><span class="card-header lang-tl">History ngayong Buwan</span>
+                <div class="card history-card">
+                    <span class="card-header lang-en">Monthly History</span><span class="card-header lang-tl">Kasaysayan ng Buwan</span>
                     <select class="month-selector" id="wMonth" onchange="updateHistory()">
-                        <option value="jan">January 2026</option><option value="feb">February 2026</option><option value="jul" selected>July 2026</option><option value="dec">December 2026</option>
+                        <option value="0">January 2026</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6" selected>July 2026</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option>
                     </select>
-                    <div class="hist-row"><div class="hist-box"><span>AVG</span><b id="avg-w">0.74m</b></div><div class="hist-box"><span>PEAK</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div></div>
-                    <p id="w-summary" class="boomer-note"><span class="lang-tl">Ulat: Naging ligtas ang tubig ngayong buwan.</span></p>
+                    <div class="stats-mini">
+                        <div class="stat-box"><span>AVG</span><b id="avg-w">0.74m</b></div>
+                        <div class="stat-box"><span>PEAK</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div>
+                    </div>
+                    <div class="boomer-summary" id="w-summary"><span class="lang-en">The water was mostly safe this month.</span><span class="lang-tl">Naging maayos ang tubig nitong buwan.</span></div>
                     <div class="chart-box"><canvas id="histWChart"></canvas></div>
                 </div>
             </div>
         </main>
 
+        <!-- 🌬️ AIR PAGE -->
         <section id="air" class="page">
-            <div id="live-pill-a" class="status-pill" style="background:var(--air-color)"><span class="lang-en">AIR: GOOD</span><span class="lang-tl">HANGIN: MABUTI</span></div>
+            <div id="live-pill-a" class="status-pill" style="background:var(--safe)"><span class="lang-en">AIR: GOOD</span><span class="lang-tl">HANGIN: MABUTI</span></div>
             <div class="dashboard-grid">
-                <div class="card" style="border-top: 8px solid var(--air-color);">
-                    <span class="card-header">Live Air Index</span>
-                    <div style="color: var(--air-color); margin-bottom: 20px;"><span class="big-val" id="cur-a">0</span><span class="unit">AQI</span></div>
+                <div class="card live-card">
+                    <span class="card-header lang-en">Live Air Quality</span><span class="card-header lang-tl">Live na Kalidad ng Hangin</span>
+                    <div class="val-display" style="color: var(--air-color);"><span class="big-val" id="cur-a">0</span><span class="unit">AQI</span></div>
                     <div class="chart-box"><canvas id="liveAChart"></canvas></div>
                     <div class="integrated-guide">
-                        <div class="guide-step"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-tl">Mabuti (0-50)</b><p class="lang-tl">Ligtas lumabas ng bahay.</p></div></div>
-                        <div class="guide-step"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-tl">Delikado (101+)</b><p class="lang-tl">Mag-mask po kung lalabas.</p></div></div>
+                        <span class="guide-title">Air Guide</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b>0-50: Good.</b> <span class="lang-en">Safe for all.</span><span class="lang-tl">Ligtas para sa lahat.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b>101+: Bad.</b> <span class="lang-en">Wear a mask.</span><span class="lang-tl">Mag-mask po lalabas.</span></p></div>
                     </div>
                 </div>
-                <div class="card">
+                <div class="card history-card">
                     <span class="card-header">Monthly Air Report</span>
-                    <div class="hist-row"><div class="hist-box"><span>AVG</span><b>22 AQI</b></div><div class="hist-box"><span>PEAK</span><b>38 AQI</b></div></div>
+                    <select class="month-selector" id="aMonth" onchange="updateHistory()">
+                        <option value="6" selected>July 2026</option><option value="5">June 2026</option>
+                    </select>
+                    <div class="stats-mini">
+                        <div class="stat-box"><span>AVG</span><b id="avg-a">22</b></div>
+                        <div class="stat-box"><span>PEAK</span><b id="peak-a" style="color:var(--air-color)">38</b></div>
+                    </div>
+                    <div class="boomer-summary" style="border-left-color: var(--air-color);" id="a-summary"><span class="lang-en">The air was fresh this month.</span><span class="lang-tl">Sariwa ang hangin ngayong buwan.</span></div>
                     <div class="chart-box"><canvas id="histAChart"></canvas></div>
                 </div>
             </div>
         </section>
 
+        <!-- 📊 LOGS PAGE -->
         <section id="history" class="page">
             <div class="dashboard-grid">
                 <div class="card">
-                    <span class="card-header lang-en">Station Status</span><span class="card-header lang-tl">Kondisyon ng Station</span>
-                    <div style="display:flex; justify-content:space-between; margin-bottom: 12px; align-items: flex-end;">
-                        <div><span style="font-weight: 900; font-size: 32px; color: var(--solar-color);"><span id="cur-s">0</span>%</span><small style="font-weight: 800; color: var(--text-sub); margin-left: 5px;">BATT</small></div>
-                        <span style="font-size: 13px; font-weight: 800; color: var(--rizal-blue);">STORAGE: DAY 3</span>
+                    <span class="card-header lang-en">Recent Activity</span><span class="card-header lang-tl">Mga huling Ganap</span>
+                    <div id="log-list" class="log-container">
+                        <div class="log-item"><span class="time">Now</span><span class="msg">Station Online</span></div>
+                        <div class="log-item"><span class="time">1:30 PM</span><span class="msg">Supabase Sync OK</span></div>
                     </div>
-                    <div class="track"><div class="fill" id="solarFill" style="background:var(--solar-color); width:0%;"></div></div>
-                    <p style="font-size: 13px; color: var(--text-sub); margin-top: 15px;"><span class="lang-tl">Paalala: Binubura ang local memory kada 3 araw.</span></p>
+                </div>
+                <div class="card">
+                    <span class="card-header">System Health</span>
+                    <div class="solar-info">
+                        <b>SOLAR BATT: <span id="cur-s">0</span>%</b>
+                        <b>DAY 3 STORAGE</b>
+                    </div>
+                    <div class="track"><div class="fill" id="solarFill"></div></div>
+                    <p class="lang-en">Device memory is cleaned every 3 days.</p>
+                    <p class="lang-tl">Nililinis ang memory kada 3 araw.</p>
                 </div>
             </div>
         </section>
 
+        <!-- 🆘 HELP PAGE -->
         <section id="services" class="page">
             <div class="dashboard-grid">
-                <div class="card" style="background: var(--rizal-blue); color: white;">
-                    <h3 class="lang-tl" style="margin:0;">Register sa Text Alert</h3>
+                <div class="card sms-card">
+                    <h3 class="lang-en">SMS Alert Registration</h3><h3 class="lang-tl">Register sa Text Alert</h3>
+                    <p class="lang-en">Receive a text during emergencies.</p><p class="lang-tl">I-text ang baha alerts sa iyo.</p>
                     <input type="tel" class="sms-input" placeholder="09XXXXXXXXX">
-                    <button class="btn-register">SUBMIT</button>
+                    <button class="btn-main">REGISTER</button>
                 </div>
                 <div class="card">
-                    <h3 class="lang-tl">Hotlines</h3>
-                    <a href="tel:911" class="contact-card"><b>B-RESCUE</b><div class="call-btn">CALL</div></a>
+                    <h3>Hotlines</h3>
+                    <a href="tel:911" class="contact-card"><b>B-RESCUE (911)</b><div class="call-btn">CALL</div></a>
                     <a href="tel:0284511647" class="contact-card"><b>Darangan Hall</b><div class="call-btn">CALL</div></a>
                 </div>
                 <div class="card">
-                    <h3 class="lang-tl">I-report ang Problema (Bug Report)</h3>
-                    <textarea class="bug-input" rows="3" placeholder="I-type dito ang problema sa app o sensor..."></textarea>
-                    <button class="btn-register" style="background:var(--rizal-blue); color:white;">SEND REPORT</button>
+                    <h3 class="lang-tl">Bug Report</h3>
+                    <textarea class="bug-input" placeholder="Anong problema sa app?"></textarea>
+                    <button class="btn-main">SEND REPORT</button>
                 </div>
             </div>
         </section>
     </div>
 
+    <!-- MOBILE NAV -->
     <nav class="mobile-nav">
         <button onclick="nav('water')" id="mb-water" class="nav-btn active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span>WATER</span></button>
         <button onclick="nav('air')" id="mb-air" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg><span>AIR</span></button>
@@ -118,6 +167,7 @@
         <button onclick="nav('services')" id="mb-services" class="nav-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg><span>HELP</span></button>
     </nav>
 </div>
+
 <script src="script.js"></script>
 </body>
 </html>
