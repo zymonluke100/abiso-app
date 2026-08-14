@@ -1,18 +1,26 @@
-// 1. SUPABASE CONNECTION (Using your Keys)
+// 1. SUPABASE CONNECTION
 const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
-const supabaseKey = 'PASTE_YOUR_ANON_KEY_HERE'; // Copy this from your screenshot
+const supabaseKey = 'YOUR_ANON_KEY_HERE'; // PASTE YOUR KEY HERE
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 2. NAVIGATION & UI
+// 2. NAVIGATION (Clicking Tabs)
 function nav(id) {
+    // Hide all pages, remove all active classes
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    
+    // Show selected page
+    const targetPage = document.getElementById(id);
+    if(targetPage) targetPage.classList.add('active');
+    
+    // Set button active in both Sidebar and Bottom Nav
     const btns = document.querySelectorAll('[id^="mb-"], [id^="sd-"]');
     btns.forEach(btn => { if(btn.id.includes(id)) btn.classList.add('active'); });
+    
     window.scrollTo(0,0);
 }
 
+// 3. UI TOGGLES
 function toggleLang() {
     const h = document.documentElement;
     const isEng = h.getAttribute('data-lang') === 'en';
@@ -27,36 +35,38 @@ function toggleTheme() {
     document.getElementById('thBtn').innerText = isLight ? '☀️ Mode' : '🌙 Mode';
 }
 
-// 3. CHARTS
+// 4. CHARTS CONFIG
 const cfg = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } };
 const lw = new Chart(document.getElementById('liveWChart').getContext('2d'), { type: 'line', data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0,0,0,0,0,0], borderColor: '#0038A8', fill: true, backgroundColor: 'rgba(0,56,168,0.05)', pointRadius: 0 }] }, options: cfg });
 const la = new Chart(document.getElementById('liveAChart').getContext('2d'), { type: 'line', data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0,0,0,0,0,0], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.05)', pointRadius: 0 }] }, options: cfg });
-const hw = new Chart(document.getElementById('histWChart').getContext('2d'), { type: 'bar', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [0.6, 0.9, 0.7, 1.1], backgroundColor: '#0038A8', borderRadius: 12 }] }, options: cfg });
+const hw = new Chart(document.getElementById('histWChart').getContext('2d'), { type: 'bar', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [0.65, 0.95, 0.7, 1.1], backgroundColor: '#0038A8', borderRadius: 12 }] }, options: cfg });
 const ha = new Chart(document.getElementById('histAChart').getContext('2d'), { type: 'line', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, options: cfg });
 
-// 4. SUPABASE REALTIME LISTENER
+// 5. SUPABASE REALTIME LISTENER
 const channel = supabase
   .channel('public:dike_data')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
     const data = payload.new;
-    
-    // Update Numbers
+    if (!data) return;
+
+    // Update Text
     document.getElementById('cur-w').innerText = data.water.toFixed(2);
     document.getElementById('cur-a').innerText = data.air;
     document.getElementById('cur-s').innerText = data.solar;
 
-    // Update Charts
+    // Update Live Charts
     lw.data.datasets[0].data.shift(); lw.data.datasets[0].data.push(data.water); lw.update('none');
     la.data.datasets[0].data.shift(); la.data.datasets[0].data.push(data.air); la.update('none');
 
-    // Update Solar Bar
+    // Solar Bar
     document.getElementById('solarFill').style.width = data.solar + "%";
 
-    // Update Status Pills
+    // WATER PILL LOGIC
     const wPill = document.getElementById('live-pill-w');
-    if (data.water > 1.5) { wPill.style.background = 'var(--danger)'; wPill.innerHTML = `<div class="pulse"></div><span class="lang-tl">STATUS: DELIKADO</span>`; }
-    else { wPill.style.background = 'var(--safe)'; wPill.innerHTML = `<div class="pulse"></div><span class="lang-tl">STATUS: LIGTAS</span>`; }
+    if (data.water > 1.5) { wPill.style.background = 'var(--danger)'; wPill.innerHTML = `<div class="pulse"></div><span>STATUS: DELIKADO</span>`; }
+    else { wPill.style.background = 'var(--safe)'; wPill.innerHTML = `<div class="pulse"></div><span>STATUS: LIGTAS</span>`; }
 
+    // AIR PILL LOGIC
     const aPill = document.getElementById('live-pill-a');
     if (data.air > 100) { aPill.style.background = 'var(--danger)'; aPill.innerText = "HANGIN: MASAMA"; }
     else { aPill.style.background = 'var(--safe)'; aPill.innerText = "HANGIN: MABUTI"; }
@@ -64,6 +74,7 @@ const channel = supabase
   .subscribe();
 
 function updateHistory() {
+    // Simulated month switch
     hw.data.datasets[0].data = Array.from({length: 4}, () => (0.4 + Math.random()).toFixed(2));
     hw.update();
 }
