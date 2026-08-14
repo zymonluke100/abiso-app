@@ -28,48 +28,119 @@
         }
 
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; }
-        body { background-color: var(--bg); margin: 0; color: var(--text); overflow-x: hidden; font-size: 15px; width: 100vw; height: 100vh; display: flex; flex-direction: column; }
-
-        .app-container { display: flex; flex: 1; height: 100vh; overflow: hidden; }
-        
-        /* Sidebar (Desktop UI) */
-        aside.sidebar { 
-            width: 280px; background: var(--nav-bg); border-right: 1px solid var(--nav-border);
-            display: none; flex-direction: column; padding: 30px 20px; z-index: 1001; flex-shrink: 0;
+        body { 
+            background-color: var(--bg); 
+            margin: 0; 
+            color: var(--text); 
+            overflow-x: hidden; 
+            font-size: 15px; 
+            min-height: 100vh;
         }
-        .main-content { flex: 1; min-width: 0; overflow-y: auto; position: relative; -webkit-overflow-scrolling: touch; }
 
-        /* Bottom Navigation Bar (Mobile UI) */
+        .app-container { display: flex; min-height: 100vh; width: 100%; position: relative; }
+        
+        /* Desktop Sidebar */
+        aside.sidebar { 
+            width: 280px; 
+            background: var(--nav-bg); 
+            border-right: 1px solid var(--nav-border);
+            display: none; 
+            flex-direction: column; 
+            padding: 30px 20px; 
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            z-index: 100;
+            flex-shrink: 0;
+        }
+        
+        .main-content { 
+            flex: 1; 
+            min-width: 0; 
+            display: flex; 
+            flex-direction: column;
+            padding-bottom: 90px; /* Leaves room for bottom nav */
+        }
+
+        /* Mobile Bottom Nav */
         nav.mobile-nav { 
-            position: fixed; bottom: 0; left: 0; width: 100%; height: 70px; 
-            background: var(--nav-bg); display: flex; justify-content: space-around; 
-            border-top: 1px solid var(--nav-border); z-index: 99999; 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 70px; 
+            background: var(--nav-bg); 
+            display: flex; 
+            justify-content: space-around; 
+            border-top: 1px solid var(--nav-border); 
+            z-index: 99999; 
             padding-bottom: env(safe-area-inset-bottom);
         }
 
         .nav-btn { 
-            background: none; border: none; color: var(--text-sub); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            font-size: 10px; font-weight: 800; cursor: pointer; flex: 1; height: 100%;
+            background: none; 
+            border: none; 
+            color: var(--text-sub); 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center;
+            font-size: 11px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            flex: 1; 
+            height: 100%;
+            pointer-events: auto;
         }
         .nav-btn.active { color: var(--rizal-blue); }
-        .nav-btn svg { width: 22px; height: 22px; margin-bottom: 4px; pointer-events: none; }
+        .nav-btn * { pointer-events: none; } /* Prevents child SVG from blocking click */
+        .nav-btn svg { width: 22px; height: 22px; margin-bottom: 4px; }
         
-        .sidebar .nav-btn { flex-direction: row; font-size: 14px; gap: 14px; margin-bottom: 8px; padding: 14px; border-radius: 14px; width: 100%; text-align: left; height: auto; }
+        .sidebar .nav-btn { 
+            flex-direction: row; 
+            font-size: 14px; 
+            gap: 14px; 
+            margin-bottom: 8px; 
+            padding: 14px; 
+            border-radius: 14px; 
+            width: 100%; 
+            text-align: left; 
+            height: auto; 
+        }
         .sidebar .nav-btn.active { background: var(--rizal-bg); color: var(--rizal-blue); }
 
-        /* App Header */
-        header { background: linear-gradient(135deg, var(--rizal-blue) 0%, #001A4D 100%); color: white; padding: 20px 24px; flex-shrink: 0; }
+        /* Header */
+        header { 
+            background: linear-gradient(135deg, var(--rizal-blue) 0%, #001A4D 100%); 
+            color: white; 
+            padding: 20px 24px; 
+            position: relative;
+            z-index: 10;
+        }
         .header-inner { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; }
-        .btn-tool { background: rgba(255,255,255,0.18); border: none; color: white; padding: 8px 12px; border-radius: 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        
+        .btn-tool { 
+            background: rgba(255,255,255,0.22); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            color: white; 
+            padding: 8px 14px; 
+            border-radius: 10px; 
+            font-size: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            pointer-events: auto;
+            position: relative;
+            z-index: 20;
+        }
+        .btn-tool:active { transform: scale(0.95); }
 
-        /* Main Page Views */
-        .page { display: none; padding: 18px; padding-bottom: 95px; max-width: 1200px; margin: 0 auto; width: 100%; }
+        /* Pages */
+        .page { display: none; padding: 18px; max-width: 1200px; margin: 0 auto; width: 100%; }
         .page.active { display: block; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Dashboard Cards */
-        .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); contain: content; }
+        /* Cards */
+        .card { background: var(--card); border-radius: 24px; padding: 22px; margin-bottom: 18px; border: 1px solid rgba(0,0,0,0.03); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .card-header { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.1px; margin-bottom: 12px; display: block; }
         .big-val { font-size: 48px; font-weight: 900; line-height: 1; }
         .unit { font-size: 20px; color: var(--text-sub); margin-left: 4px; font-weight: 600; }
@@ -115,13 +186,15 @@
             aside.sidebar { display: flex; }
             nav.mobile-nav { display: none; }
             header { padding: 24px 36px; }
+            .main-content { padding-bottom: 30px; }
             .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
             .page { padding: 30px 36px; }
             .full-width { grid-column: span 2; }
         }
 
-        [data-lang="en"] .lang-tl { display: none; }
-        [data-lang="tl"] .lang-en { display: none; }
+        /* Language Toggle Visibility Rules */
+        html[data-lang="en"] .lang-tl { display: none !important; }
+        html[data-lang="tl"] .lang-en { display: none !important; }
     </style>
 </head>
 <body>
@@ -161,8 +234,8 @@
                     <span style="font-size:10px; font-weight:700; opacity:0.8;">BINANGONAN, RIZAL</span>
                 </div>
                 <div style="display:flex; gap:8px;">
-                    <button class="btn-tool" onclick="toggleLang()" id="langBtn">Tagalog</button>
-                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn">🌙 Mode</button>
+                    <button class="btn-tool" onclick="toggleLang()" id="langBtn" type="button">Tagalog</button>
+                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn" type="button">🌙 Mode</button>
                 </div>
             </div>
         </header>
@@ -245,7 +318,7 @@
             </div>
         </section>
 
-        <!-- --- 📊 LOGS & HARDWARE DIAGNOSTICS VIEW --- -->
+        <!-- --- 📊 LOGS VIEW --- -->
         <section id="history" class="page">
             <div class="dashboard-grid">
                 <div class="card">
@@ -279,14 +352,14 @@
             </div>
         </section>
 
-        <!-- --- 🆘 EVACUATION MAP & EMERGENCY HELP VIEW --- -->
+        <!-- --- 🆘 EVACUATION MAP & HELP VIEW --- -->
         <section id="services" class="page">
             <div class="dashboard-grid">
                 <div class="card" style="background:var(--rizal-blue); color:white;">
                     <h3 class="lang-en" style="margin:0;">SMS Early Warning Registration</h3>
                     <h3 class="lang-tl" style="margin:0;">Mag-rehistro sa SMS Text Alert</h3>
                     <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX">
-                    <button class="btn-main" onclick="registerSMS()" style="background:white; color:var(--rizal-blue);">REGISTER PHONE NUMBER</button>
+                    <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">REGISTER PHONE NUMBER</button>
                 </div>
 
                 <div class="card">
@@ -319,7 +392,7 @@
                     <span class="card-header lang-en">Report an Incident or Hazard</span>
                     <span class="card-header lang-tl">Mag-ulat ng Problema o Baha</span>
                     <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Describe the hazard (e.g. rising water, clogged canal)..."></textarea>
-                    <button class="btn-main" onclick="sendReport()">SUBMIT TO DRRMO</button>
+                    <button class="btn-main" onclick="sendReport()" type="button">SUBMIT TO DRRMO</button>
                 </div>
             </div>
         </section>
@@ -327,19 +400,19 @@
 
     <!-- Mobile Navigation Bar -->
     <nav class="mobile-nav">
-        <button onclick="nav('water')" class="nav-btn active" id="mb-water">
+        <button onclick="nav('water')" class="nav-btn active" id="mb-water" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
             <span>WATER</span>
         </button>
-        <button onclick="nav('air')" class="nav-btn" id="mb-air">
+        <button onclick="nav('air')" class="nav-btn" id="mb-air" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
             <span>AIR</span>
         </button>
-        <button onclick="nav('history')" class="nav-btn" id="mb-history">
+        <button onclick="nav('history')" class="nav-btn" id="mb-history" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
             <span>LOGS</span>
         </button>
-        <button onclick="nav('services')" class="nav-btn" id="mb-services">
+        <button onclick="nav('services')" class="nav-btn" id="mb-services" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
             <span>HELP</span>
         </button>
@@ -352,41 +425,54 @@
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
     const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-    // 2. NAVIGATION HANDLER
-    function nav(pageId) {
-        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    // 2. BULLETPROOF NAVIGATION CONTROLLER
+    window.nav = function(pageId) {
+        // Hide all pages & deactivate all buttons
+        const pages = document.querySelectorAll('.page');
+        const buttons = document.querySelectorAll('.nav-btn');
         
+        pages.forEach(p => p.classList.remove('active'));
+        buttons.forEach(b => b.classList.remove('active'));
+        
+        // Activate target page
         const targetPage = document.getElementById(pageId);
         if (targetPage) targetPage.classList.add('active');
         
-        const mobileBtn = document.getElementById('mb-' + pageId);
-        const sidebarBtn = document.getElementById('sd-' + pageId);
-        if (mobileBtn) mobileBtn.classList.add('active');
-        if (sidebarBtn) sidebarBtn.classList.add('active');
+        // Activate matching mobile & sidebar buttons
+        const mb = document.getElementById('mb-' + pageId);
+        const sd = document.getElementById('sd-' + pageId);
+        if (mb) mb.classList.add('active');
+        if (sd) sd.classList.add('active');
 
+        // Fix Leaflet map sizing when navigating to Evacuation tab
         if (pageId === 'services' && map) {
-            setTimeout(() => { map.invalidateSize(); }, 250);
+            setTimeout(() => { map.invalidateSize(); }, 200);
         }
+        
         window.scrollTo({ top: 0, behavior: 'instant' });
-    }
+    };
 
-    // 3. LANGUAGE AND THEME CONTROLLERS
-    function toggleLang() {
+    // 3. LANGUAGE TOGGLE (English <-> Tagalog)
+    window.toggleLang = function() {
         const root = document.documentElement;
-        const isEng = root.getAttribute('data-lang') === 'en';
-        root.setAttribute('data-lang', isEng ? 'tl' : 'en');
-        document.getElementById('langBtn').innerText = isEng ? 'English' : 'Tagalog';
-    }
+        const currentLang = root.getAttribute('data-lang') || 'en';
+        const newLang = currentLang === 'en' ? 'tl' : 'en';
+        
+        root.setAttribute('data-lang', newLang);
+        document.getElementById('langBtn').innerText = newLang === 'en' ? 'Tagalog' : 'English';
+    };
 
-    function toggleTheme() {
+    // 4. THEME TOGGLE (Dark <-> Light)
+    window.toggleTheme = function() {
         const root = document.documentElement;
-        const isLight = root.getAttribute('data-theme') === 'light';
-        root.setAttribute('data-theme', isLight ? 'dark' : 'light');
-        document.getElementById('thBtn').innerText = isLight ? '🌙 Mode' : '☀️ Mode';
-    }
+        const currentTheme = root.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        root.setAttribute('data-theme', newTheme);
+        document.getElementById('thBtn').innerText = newTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+    };
 
-    // 4. CHARTS CONFIGURATION
+    // 5. CHART CONFIGURATIONS
     const chartCfg = { 
         responsive: true, 
         maintainAspectRatio: false, 
@@ -419,7 +505,7 @@
         options: chartCfg 
     });
 
-    // 5. MONTHLY RECORDS DATA
+    // 6. MONTHLY HYDROLOGY DATA
     const monthlyHistory = {
         0: { w: [0.4, 0.5, 0.45, 0.6], avgW: '0.48m', peakW: '0.75m' },
         1: { w: [0.35, 0.4, 0.42, 0.5], avgW: '0.41m', peakW: '0.62m' },
@@ -431,15 +517,15 @@
         7: { w: [0.8, 1.2, 0.9, 1.35], avgW: '1.06m', peakW: '1.62m' }
     };
 
-    function updateWaterHistory(monthIdx) {
+    window.updateWaterHistory = function(monthIdx) {
         const selected = monthlyHistory[monthIdx] || monthlyHistory[6];
         hw.data.datasets[0].data = selected.w;
         hw.update();
         document.getElementById('avg-w').innerText = selected.avgW;
         document.getElementById('peak-w').innerText = selected.peakW;
-    }
+    };
 
-    // 6. TELEMETRY PROCESSING & SUPABASE REALTIME
+    // 7. REALTIME TELEMETRY STREAM
     function applyTelemetry(data) {
         if (!data) return;
         const water = parseFloat(data.water).toFixed(2);
@@ -487,7 +573,6 @@
         }
     }
 
-    // Realtime WebSocket Subscription
     supabase.channel('public:dike_data')
         .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
             applyTelemetry(payload.new);
@@ -496,7 +581,7 @@
 
     fetchLatestTelemetry();
 
-    // 7. EVACUATION MAP INITIALIZATION
+    // 8. EVACUATION MAP
     let map;
     function initMap() {
         const daranganCoord = [14.4788, 121.1785];
@@ -519,8 +604,8 @@
 
     window.addEventListener('DOMContentLoaded', initMap);
 
-    // 8. SMS SUBSCRIBER & INCIDENT REPORTING
-    async function registerSMS() {
+    // 9. FORMS
+    window.registerSMS = async function() {
         const phone = document.getElementById('subPhone').value.trim();
         if (phone.length < 11) {
             alert("Please enter a valid 11-digit mobile number.");
@@ -534,9 +619,9 @@
             alert("Mobile number " + phone + " successfully enrolled in ABISO Emergency SMS alerts!");
             document.getElementById('subPhone').value = "";
         }
-    }
+    };
 
-    async function sendReport() {
+    window.sendReport = async function() {
         const text = document.getElementById('reportDesc').value.trim();
         if (!text) {
             alert("Please describe the incident first.");
@@ -550,7 +635,7 @@
             alert("Report submitted directly to Barangay Darangan DRRMO database.");
             document.getElementById('reportDesc').value = "";
         }
-    }
+    };
 </script>
 </body>
 </html>
