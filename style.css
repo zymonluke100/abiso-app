@@ -13,24 +13,19 @@
 body { background-color: var(--bg); margin: 0; color: var(--text); overflow-x: hidden; }
 
 .app-container { display: flex; min-height: 100vh; }
-aside.sidebar { width: 260px; background: var(--nav-bg); border-right: 1px solid var(--nav-border); display: none; flex-direction: column; position: sticky; top: 0; height: 100vh; padding: 30px 20px; z-index: 1001; }
-.main-content { flex: 1; min-width: 0; position: relative; }
+aside.sidebar { width: 280px; background: var(--nav-bg); border-right: 1px solid var(--nav-border); display: none; flex-direction: column; position: sticky; top: 0; height: 100vh; padding: 30px 20px; z-index: 1001; }
+.main-content { flex: 1; min-width: 0; position: relative; z-index: 1; }
 
-/* Mobile Navigation Fix - Z-INDEX 9999 */
+/* FIX CLICKABILITY - z-index 9999 */
 nav.mobile-nav { 
-    position: fixed; bottom: 0; width: 100%; height: 70px;
+    position: fixed; bottom: 0; width: 100%; height: 75px; 
     background: var(--nav-bg); display: flex; justify-content: space-around; 
-    border-top: 1px solid var(--nav-border); z-index: 9999; 
+    border-top: 1px solid var(--nav-border); z-index: 9999 !important; 
     padding-bottom: env(safe-area-inset-bottom);
 }
-
-.nav-btn { 
-    background: none; border: none; color: var(--text-sub); 
-    display: flex; flex-direction: column; align-items: center; 
-    font-size: 11px; font-weight: 800; cursor: pointer; flex: 1;
-    justify-content: center; height: 100%;
-}
+.nav-btn { background: none; border: none; color: var(--text-sub); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; cursor: pointer; flex: 1; height: 100%; }
 .nav-btn.active { color: var(--rizal-blue); }
+.nav-btn svg { width: 24px; height: 24px; margin-bottom: 4px; pointer-events: none; }
 
 header { background: linear-gradient(135deg, var(--rizal-blue) 0%, #001A4D 100%); color: white; padding: 25px 20px; }
 .header-inner { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; }
@@ -47,21 +42,17 @@ header { background: linear-gradient(135deg, var(--rizal-blue) 0%, #001A4D 100%)
 .pulse { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse-anim 2s infinite; }
 @keyframes pulse-anim { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.chart-container { height: 160px; width: 100%; }
 .integrated-guide { border-top: 1px solid rgba(0,0,0,0.1); margin-top: 15px; padding-top: 15px; }
-.guide-row { display: flex; gap: 12px; margin-bottom: 8px; font-size: 13px; }
-.dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+.guide-row { display: flex; gap: 12px; margin-bottom: 12px; font-size: 13px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
 
-.hist-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-.hist-box { background: var(--rizal-bg); padding: 15px; border-radius: 15px; text-align: center; }
-.boomer-note { background: var(--rizal-bg); padding: 12px; border-radius: 12px; font-weight: 700; font-size: 13px; border-left: 4px solid var(--rizal-blue); margin-bottom:15px; }
+.stats-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.stat-box { background: var(--rizal-bg); padding: 15px; border-radius: 15px; text-align: center; }
 .month-selector { width: 100%; padding: 12px; border-radius: 12px; border: 2px solid var(--rizal-blue); background: var(--rizal-bg); font-weight: 800; color: var(--rizal-blue); margin-bottom: 20px; }
 
 .track { height: 10px; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; }
 .fill { height: 100%; background: var(--rizal-blue); transition: width 1s; width: 65%; }
 
-.contact-card { display: flex; justify-content: space-between; align-items: center; padding: 18px; background: var(--rizal-bg); border-radius: 18px; text-decoration: none; color: var(--text); font-weight: 700; margin-bottom: 10px; }
-.call-btn { background: var(--rizal-blue); color: white; padding: 8px 14px; border-radius: 10px; font-size: 12px; }
 .sms-input, .bug-input { width: 100%; padding: 15px; border-radius: 12px; background: var(--bg); color: var(--text); border: 2px solid var(--rizal-bg); margin: 10px 0; font-weight: 700; }
 .btn-main { width: 100%; padding: 15px; border-radius: 12px; border: none; background: var(--rizal-blue); color: white; font-weight: 900; cursor: pointer; }
 
