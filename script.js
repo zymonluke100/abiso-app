@@ -1,25 +1,20 @@
-// 1. SUPABASE CONNECTION (REPLACE KEY)
+// 1. SUPABASE CONNECTION
 const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2OTgyMzgsImV4cCI6MjEwMjI3NDIzOH0.WkdbAsleYsGif7k5slLQzmMXplDGlx6FQ89RuzHvYQQ';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-// 2. NAVIGATION (Click Fix)
+// 2. NAVIGATION
 function nav(id) {
-    // Force pages to hide/show
-    const pages = document.querySelectorAll('.page');
-    pages.forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    
     const target = document.getElementById(id);
     if(target) target.classList.add('active');
-
-    // Force buttons to update state
-    const allBtns = document.querySelectorAll('.nav-btn');
-    allBtns.forEach(b => b.classList.remove('active'));
     
-    // Check both Sidebar and Mobile nav
-    allBtns.forEach(btn => {
+    const btns = document.querySelectorAll('.nav-btn');
+    btns.forEach(btn => {
         if(btn.getAttribute('onclick').includes(`'${id}'`)) btn.classList.add('active');
     });
-    
     window.scrollTo(0,0);
 }
 
@@ -46,12 +41,10 @@ const la = new Chart(document.getElementById('liveAChart').getContext('2d'), { t
 const hw = new Chart(document.getElementById('histWChart').getContext('2d'), { type: 'bar', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [0.65, 0.95, 0.7, 1.1], backgroundColor: '#0038A8', borderRadius: 10 }] }, options: cfg });
 const ha = new Chart(document.getElementById('histAChart').getContext('2d'), { type: 'line', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, options: cfg });
 
-// 5. SUPABASE REALTIME LISTENER
+// 5. SUPABASE LISTENER
 supabase.channel('public:dike_data')
   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
     const data = payload.new;
-    if (!data) return;
-
     document.getElementById('cur-w').innerText = data.water.toFixed(2);
     document.getElementById('cur-a').innerText = data.air;
     document.getElementById('cur-s').innerText = data.solar;
