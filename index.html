@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ABISO | Darangan Station 01</title>
     
-    <!-- External Libraries -->
+    <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -59,7 +59,7 @@
             min-width: 0; 
             display: flex; 
             flex-direction: column;
-            padding-bottom: 90px; /* Leaves room for bottom nav */
+            padding-bottom: 90px;
         }
 
         /* Mobile Bottom Nav */
@@ -93,7 +93,7 @@
             pointer-events: auto;
         }
         .nav-btn.active { color: var(--rizal-blue); }
-        .nav-btn * { pointer-events: none; } /* Prevents child SVG from blocking click */
+        .nav-btn * { pointer-events: none; }
         .nav-btn svg { width: 22px; height: 22px; margin-bottom: 4px; }
         
         .sidebar .nav-btn { 
@@ -207,19 +207,19 @@
             <p style="font-size:10px; font-weight:800; color:var(--text-sub); margin:3px 0 0 0;">DARANGAN STATION BD-01</p>
         </div>
         <div style="margin-top:35px">
-            <button onclick="nav('water')" class="nav-btn active" id="sd-water">
+            <button onclick="nav('water')" class="nav-btn active" id="sd-water" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
                 <span class="lang-en">Water Hub</span><span class="lang-tl">Level ng Tubig</span>
             </button>
-            <button onclick="nav('air')" class="nav-btn" id="sd-air">
+            <button onclick="nav('air')" class="nav-btn" id="sd-air" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
                 <span class="lang-en">Air Quality</span><span class="lang-tl">Kalidad ng Hangin</span>
             </button>
-            <button onclick="nav('history')" class="nav-btn" id="sd-history">
+            <button onclick="nav('history')" class="nav-btn" id="sd-history" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
                 <span class="lang-en">Station Logs</span><span class="lang-tl">Ulat at Logs</span>
             </button>
-            <button onclick="nav('services')" class="nav-btn" id="sd-services">
+            <button onclick="nav('services')" class="nav-btn" id="sd-services" type="button">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
                 <span class="lang-en">Evacuation & Help</span><span class="lang-tl">Tulong at Evacuation</span>
             </button>
@@ -427,26 +427,23 @@
 
     // 2. BULLETPROOF NAVIGATION CONTROLLER
     window.nav = function(pageId) {
-        // Hide all pages & deactivate all buttons
         const pages = document.querySelectorAll('.page');
         const buttons = document.querySelectorAll('.nav-btn');
         
         pages.forEach(p => p.classList.remove('active'));
         buttons.forEach(b => b.classList.remove('active'));
         
-        // Activate target page
         const targetPage = document.getElementById(pageId);
         if (targetPage) targetPage.classList.add('active');
         
-        // Activate matching mobile & sidebar buttons
         const mb = document.getElementById('mb-' + pageId);
         const sd = document.getElementById('sd-' + pageId);
         if (mb) mb.classList.add('active');
         if (sd) sd.classList.add('active');
 
-        // Fix Leaflet map sizing when navigating to Evacuation tab
-        if (pageId === 'services' && map) {
-            setTimeout(() => { map.invalidateSize(); }, 200);
+        // Lazy initialize and resize map safely when user visits Help/Evacuation page
+        if (pageId === 'services') {
+            setTimeout(ensureMapLoaded, 100);
         }
         
         window.scrollTo({ top: 0, behavior: 'instant' });
@@ -469,7 +466,7 @@
         const newTheme = currentTheme === 'light' ? 'dark' : 'light';
         
         root.setAttribute('data-theme', newTheme);
-        document.getElementById('thBtn').innerText = newTheme === 'light' ? '☀️ Light' : '🌙 Dark';
+        document.getElementById('thBtn').innerText = newTheme === 'light' ? '🌙 Mode' : '☀️ Mode';
     };
 
     // 5. CHART CONFIGURATIONS
@@ -581,28 +578,37 @@
 
     fetchLatestTelemetry();
 
-    // 8. EVACUATION MAP
-    let map;
-    function initMap() {
-        const daranganCoord = [14.4788, 121.1785];
-        map = L.map('map-container').setView(daranganCoord, 15);
+    // 8. SAFE MAP LOADER
+    let map = null;
+    function ensureMapLoaded() {
+        const mapContainer = document.getElementById('map-container');
+        if (!mapContainer) return;
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
+        if (!map) {
+            try {
+                const daranganCoord = [14.4788, 121.1785];
+                map = L.map('map-container').setView(daranganCoord, 15);
 
-        L.marker(daranganCoord).addTo(map)
-            .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Monitoring Point")
-            .openPopup();
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
 
-        L.marker([14.4820, 121.1810]).addTo(map)
-            .bindPopup("<b>Darangan Elementary School</b><br>Primary Evacuation Center");
+                L.marker(daranganCoord).addTo(map)
+                    .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Monitoring Point")
+                    .openPopup();
 
-        L.marker([14.4750, 121.1760]).addTo(map)
-            .bindPopup("<b>Barangay Covered Court</b><br>Secondary Relief Operations");
+                L.marker([14.4820, 121.1810]).addTo(map)
+                    .bindPopup("<b>Darangan Elementary School</b><br>Primary Evacuation Center");
+
+                L.marker([14.4750, 121.1760]).addTo(map)
+                    .bindPopup("<b>Barangay Covered Court</b><br>Secondary Relief Operations");
+            } catch (err) {
+                console.error("Map initialization error:", err);
+            }
+        } else {
+            map.invalidateSize();
+        }
     }
-
-    window.addEventListener('DOMContentLoaded', initMap);
 
     // 9. FORMS
     window.registerSMS = async function() {
