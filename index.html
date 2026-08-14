@@ -94,7 +94,7 @@
         .big-val { font-size: 48px; font-weight: 900; line-height: 1; }
         .unit { font-size: 20px; color: var(--text-sub); margin-left: 4px; font-weight: 600; }
 
-        .status-pill { padding: 7px 15px; border-radius: 50px; font-size: 11px; font-weight: 800; background: var(--safe); color: white; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+        .status-pill { padding: 7px 15px; border-radius: 50px; font-size: 11px; font-weight: 800; background: var(--safe); color: white; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; transition: background 0.3s ease; }
         .pulse { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse-anim 2s infinite; }
         @keyframes pulse-anim { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
@@ -111,7 +111,7 @@
         .summary-note { background: var(--rizal-bg); padding: 14px; border-radius: 14px; font-weight: 700; border-left: 4px solid var(--rizal-blue); font-size: 13px; margin-bottom: 12px; }
 
         .track { height: 10px; background: rgba(0,0,0,0.08); border-radius: 8px; overflow: hidden; margin-top: 6px; }
-        .fill { height: 100%; background: var(--rizal-blue); transition: width 0.4s ease; width: 98%; }
+        .fill { height: 100%; background: var(--solar-color); transition: width 0.4s ease; width: 98%; }
 
         .contact-card { display: flex; justify-content: space-between; align-items: center; padding: 16px; background: var(--rizal-bg); border-radius: 16px; text-decoration: none; color: var(--text); font-weight: 700; margin-bottom: 10px; font-size: 14px; }
         .call-btn { background: var(--rizal-blue); color: white; padding: 7px 12px; border-radius: 8px; font-size: 11px; font-weight: 800; }
@@ -122,7 +122,7 @@
         .evac-title { font-weight: 800; font-size: 14px; margin: 0 0 4px 0; }
         .evac-desc { font-size: 12px; color: var(--text-sub); margin: 0; }
 
-        #map-container { height: 260px; width: 100%; border-radius: 16px; margin-top: 10px; }
+        #map-container { height: 260px; width: 100%; border-radius: 16px; margin-top: 10px; z-index: 1; }
 
         /* Toast Popup Notifications */
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
@@ -139,7 +139,7 @@
             .full-width { grid-column: span 2; }
         }
 
-        /* STRICT LANGUAGE DISPLAY RULES - NO MIXING */
+        /* Language Switching Rules */
         html[data-lang="en"] .lang-tl { display: none !important; }
         html[data-lang="tl"] .lang-en { display: none !important; }
     </style>
@@ -182,13 +182,13 @@
                     <h2 style="font-size:20px;">ABISO Darangan</h2>
                     <div class="conn-pill" id="conn-pill">
                         <span class="conn-dot"></span>
-                        <span id="conn-text-en" class="lang-en">STREAM: LIVE</span>
-                        <span id="conn-text-tl" class="lang-tl">KONEKSIYON: AKTIBO</span>
+                        <span id="conn-text-en" class="lang-en">STREAM: CONNECTING</span>
+                        <span id="conn-text-tl" class="lang-tl">KONEKSIYON: KUMUKONEKTA</span>
                     </div>
                 </div>
                 <div style="display:flex; gap:8px;">
                     <button class="btn-tool" onclick="toggleLang()" id="langBtn" type="button">Tagalog</button>
-                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn" type="button">🌙 Mode</button>
+                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn" type="button">☀️ Light</button>
                 </div>
             </div>
         </header>
@@ -212,7 +212,7 @@
                         <span class="card-header lang-tl">Gabay sa Antas ng Babala</span>
                         <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Normal (0.0 - 1.0m):</b><b class="lang-tl">Ligtas (0.0 - 1.0m):</b> <span class="lang-en">Safe water level. No flood threat.</span><span class="lang-tl">Ligtas ang antas ng tubig. Walang banta ng baha.</span></div></div>
                         <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><div><b class="lang-en">Alert (1.1 - 1.3m):</b><b class="lang-tl">Alerto (1.1 - 1.3m):</b> <span class="lang-en">Water level rising. Stay alert.</span><span class="lang-tl">Tumataas ang tubig. Maging mapagmatyag.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.4 - 1.6m):</b><b class="lang-tl">Babala (1.4 - 1.6m):</b> <span class="lang-en">Prepare emergency bags and supplies.</span><span class="lang-tl">Ihanda ang emergency grab bag at kagamitan.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.4 - 1.6m):</b><b class="lang-tl">Babala (1.4 - 1.6m):</b> <span class="lang-en">Prepare emergency grab bags.</span><span class="lang-tl">Ihanda ang emergency grab bag at kagamitan.</span></div></div>
                         <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Critical (1.7m+):</b><b class="lang-tl">Panganib (1.7m+):</b> <span class="lang-en">Immediate evacuation required!</span><span class="lang-tl">Lumikas na po agad sa itinalagang evacuation center!</span></div></div>
                     </div>
                 </div>
@@ -234,7 +234,7 @@
                         <div class="stat-box"><span class="lang-en">PEAK HEIGHT</span><span class="lang-tl">PINAKAMATAAS</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div>
                     </div>
                     <div class="summary-note">
-                        <span class="lang-en">Summary: Water levels stayed within safe limits during this cycle.</span>
+                        <span class="lang-en">Summary: Dike levels stayed within nominal safety limits.</span>
                         <span class="lang-tl">Buod: Naging maayos at ligtas ang tubig sa buong buwan.</span>
                     </div>
                     <div class="chart-box"><canvas id="histWChart"></canvas></div>
@@ -273,7 +273,7 @@
                         <div class="stat-box"><span class="lang-en">PEAK AQI</span><span class="lang-tl">PINAKAMATAAS</span><b style="color:var(--air-color)">38</b></div>
                     </div>
                     <div class="summary-note">
-                        <span class="lang-en">Summary: Particulate levels remained optimal due to seasonal wind conditions.</span>
+                        <span class="lang-en">Summary: Particulate levels remained optimal due to bay winds.</span>
                         <span class="lang-tl">Buod: Naging malinis ang simoy ng hangin sa baybayin ng Darangan.</span>
                     </div>
                     <div class="chart-box"><canvas id="histAChart"></canvas></div>
@@ -288,11 +288,11 @@
                     <span class="card-header lang-en">Hardware Telemetry</span>
                     <span class="card-header lang-tl">Kondisyon ng Hardware</span>
                     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
-                        <div><span style="font-weight:900; font-size:30px; color:var(--solar-color);"><span id="cur-s">98</span>%</span><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-en">BATT</small><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-tl">BATERIS</small></div>
+                        <div><span style="font-weight:900; font-size:30px; color:var(--solar-color);"><span id="cur-s">98</span>%</span><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-en">BATT</small><small style="font-weight:800; color:var(--text-sub); margin-left:6px;" class="lang-tl">BATERYA</small></div>
                         <span style="font-size:11px; font-weight:800; color:var(--safe);" class="lang-en">SOLAR: 13.4V</span>
                         <span style="font-size:11px; font-weight:800; color:var(--safe);" class="lang-tl">SOLAR: 13.4V (NAGCHA-CHARGE)</span>
                     </div>
-                    <div class="track"><div class="fill" id="solarFill" style="background:var(--solar-color);"></div></div>
+                    <div class="track"><div class="fill" id="solarFill"></div></div>
                     
                     <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
                         <div class="stat-box" style="padding:10px;"><span class="lang-en">Ultrasonic Sensor</span><span class="lang-tl">Sensor ng Tubig</span><b style="font-size:13px; color:var(--safe);">ONLINE</b></div>
@@ -304,14 +304,14 @@
                     <span class="card-header lang-en">System Diagnostics</span>
                     <span class="card-header lang-tl">Pagsusuri sa Sistema</span>
                     <div style="font-size:13px; color:var(--text-sub); line-height:1.7;">
-                        <p class="lang-en">• <b>Supabase Cloud Connection:</b> <span style="color:var(--safe); font-weight:bold;">Active & Synchronized</span></p>
-                        <p class="lang-tl">• <b>Koneksiyon sa Supabase Cloud:</b> <span style="color:var(--safe); font-weight:bold;">Aktibo at Nakakabit</span></p>
+                        <p class="lang-en">• <b>Supabase Realtime:</b> <span id="syncStatusEN" style="color:var(--safe); font-weight:bold;">Active & Synchronized</span></p>
+                        <p class="lang-tl">• <b>Koneksiyon sa Supabase:</b> <span id="syncStatusTL" style="color:var(--safe); font-weight:bold;">Aktibo at Nakakabit</span></p>
                         
                         <p class="lang-en">• <b>Telemetry Protocol:</b> REST API / WebSockets</p>
                         <p class="lang-tl">• <b>Protokol ng Datos:</b> REST API / WebSockets</p>
                         
-                        <p class="lang-en">• <b>Station:</b> Darangan Dike Stand BD-01</p>
-                        <p class="lang-tl">• <b>Lokasyon ng Istasyon:</b> Darangan Dike Stand BD-01</p>
+                        <p class="lang-en">• <b>Station ID:</b> BD-01 (Darangan Dike Stand)</p>
+                        <p class="lang-tl">• <b>ID ng Istasyon:</b> BD-01 (Darangan Dike Stand)</p>
                     </div>
                 </div>
             </div>
@@ -327,7 +327,7 @@
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-en">Receive instant text alerts directly when dike water level reaches warning threshold.</p>
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-tl">Makatanggap ng agarang text alert sa cellphone kapag tumaas ang tubig sa dike.</p>
                     
-                    <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX">
+                    <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX" maxlength="11">
                     <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">
                         <span class="lang-en">REGISTER PHONE NUMBER</span>
                         <span class="lang-tl">IPATALA ANG NUMERO</span>
@@ -363,7 +363,7 @@
                 <div class="card full-width">
                     <span class="card-header lang-en">Report an Incident or Hazard</span>
                     <span class="card-header lang-tl">Mag-ulat ng Panganib o Baha</span>
-                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Ilarawan ang nakitang panganib (hal. baradong kanal, pag-apaw ng tubig)..."></textarea>
+                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Describe the hazard (e.g. rising water, clogged canal)..."></textarea>
                     <button class="btn-main" onclick="sendReport()" type="button">
                         <span class="lang-en">SUBMIT TO DRRMO</span>
                         <span class="lang-tl">IPADALA SA DRRMO</span>
@@ -396,18 +396,14 @@
 
 <script>
     // ========================================================
-    // 1. SUPABASE CLIENT INITIALIZATION
+    // 1. SUPABASE CLIENT CONFIGURATION
     // ========================================================
     const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
     const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
     
     let supabaseClient = null;
-    try {
-        if (typeof window.supabase !== 'undefined') {
-            supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-        }
-    } catch (e) {
-        console.error("Supabase load error:", e);
+    if (typeof window.supabase !== 'undefined') {
+        supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
     }
 
     // ========================================================
@@ -439,7 +435,7 @@
         if (sd) { sd.classList.add('active'); sd.setAttribute('aria-selected', 'true'); }
 
         if (pageId === 'services') {
-            setTimeout(initEvacMap, 150);
+            setTimeout(initEvacMap, 200);
         }
         window.scrollTo({ top: 0, behavior: 'instant' });
     };
@@ -465,59 +461,55 @@
     };
 
     // ========================================================
-    // 3. CHART.JS CONFIGURATION
+    // 3. CHART CONFIGURATIONS
     // ========================================================
     let lw = null, la = null, hw = null, ha = null;
 
     function initAllCharts() {
-        try {
-            if (typeof Chart === 'undefined') return;
+        if (typeof Chart === 'undefined') return;
 
-            const chartOptions = { 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                animation: false, 
-                plugins: { legend: { display: false } }, 
-                scales: { x: { display: false }, y: { display: false } } 
-            };
+        const chartOptions = { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            animation: false, 
+            plugins: { legend: { display: false } }, 
+            scales: { x: { display: false }, y: { display: false } } 
+        };
 
-            const ctxLW = document.getElementById('liveWChart');
-            if (ctxLW) {
-                lw = new Chart(ctxLW.getContext('2d'), { 
-                    type: 'line', 
-                    data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0.8, 0.82, 0.81, 0.83, 0.82, 0.82], borderColor: '#0038A8', fill: true, backgroundColor: 'rgba(0,56,168,0.1)', pointRadius: 0, tension: 0.3 }] }, 
-                    options: chartOptions 
-                });
-            }
+        const ctxLW = document.getElementById('liveWChart');
+        if (ctxLW) {
+            lw = new Chart(ctxLW.getContext('2d'), { 
+                type: 'line', 
+                data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0.80, 0.82, 0.81, 0.83, 0.82, 0.82], borderColor: '#4D8BFF', fill: true, backgroundColor: 'rgba(77,139,255,0.12)', pointRadius: 0, tension: 0.3 }] }, 
+                options: chartOptions 
+            });
+        }
 
-            const ctxLA = document.getElementById('liveAChart');
-            if (ctxLA) {
-                la = new Chart(ctxLA.getContext('2d'), { 
-                    type: 'line', 
-                    data: { labels: [1,2,3,4,5,6], datasets: [{ data: [18, 19, 17, 21, 18, 22], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.1)', pointRadius: 0, tension: 0.3 }] }, 
-                    options: chartOptions 
-                });
-            }
+        const ctxLA = document.getElementById('liveAChart');
+        if (ctxLA) {
+            la = new Chart(ctxLA.getContext('2d'), { 
+                type: 'line', 
+                data: { labels: [1,2,3,4,5,6], datasets: [{ data: [18, 19, 17, 21, 18, 22], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.12)', pointRadius: 0, tension: 0.3 }] }, 
+                options: chartOptions 
+            });
+        }
 
-            const ctxHW = document.getElementById('histWChart');
-            if (ctxHW) {
-                hw = new Chart(ctxHW.getContext('2d'), { 
-                    type: 'bar', 
-                    data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [0.65, 0.95, 0.70, 1.10], backgroundColor: '#0038A8', borderRadius: 8 }] }, 
-                    options: chartOptions 
-                });
-            }
+        const ctxHW = document.getElementById('histWChart');
+        if (ctxHW) {
+            hw = new Chart(ctxHW.getContext('2d'), { 
+                type: 'bar', 
+                data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [0.65, 0.95, 0.70, 1.10], backgroundColor: '#4D8BFF', borderRadius: 8 }] }, 
+                options: chartOptions 
+            });
+        }
 
-            const ctxHA = document.getElementById('histAChart');
-            if (ctxHA) {
-                ha = new Chart(ctxHA.getContext('2d'), { 
-                    type: 'line', 
-                    data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, 
-                    options: chartOptions 
-                });
-            }
-        } catch (e) {
-            console.error('Chart creation error:', e);
+        const ctxHA = document.getElementById('histAChart');
+        if (ctxHA) {
+            ha = new Chart(ctxHA.getContext('2d'), { 
+                type: 'line', 
+                data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, 
+                options: chartOptions 
+            });
         }
     }
 
@@ -542,13 +534,19 @@
     };
 
     // ========================================================
-    // 4. TELEMETRY RENDERING & ALERTS
+    // 4. TELEMETRY & ADAPTIVE ALERT PARSER
     // ========================================================
     function applyTelemetry(data) {
         if (!data) return;
-        const water = parseFloat(data.water).toFixed(2);
-        const air = parseInt(data.air);
-        const solar = parseInt(data.solar || 98);
+
+        // Support standard DB naming alternatives
+        const rawWater = data.water !== undefined ? data.water : (data.water_level !== undefined ? data.water_level : 0.82);
+        const rawAir = data.air !== undefined ? data.air : (data.aqi !== undefined ? data.aqi : 22);
+        const rawSolar = data.solar !== undefined ? data.solar : (data.battery !== undefined ? data.battery : 98);
+
+        const water = parseFloat(rawWater).toFixed(2);
+        const air = parseInt(rawAir, 10);
+        const solar = Math.min(100, Math.max(0, parseInt(rawSolar, 10)));
 
         document.getElementById('cur-w').innerText = water;
         document.getElementById('cur-a').innerText = air;
@@ -584,31 +582,52 @@
             txtW_TL.innerText = "KATAYUAN SA DIKE: ALERTO (MAGMASID)";
         } else {
             wPill.style.background = 'var(--safe)';
-            txtW_EN.innerText = "DIKE STATUS: NORMAL (SAFE)";
+            txtW_EN.innerText = "DIKE STATUS: NORMAL";
             txtW_TL.innerText = "KATAYUAN SA DIKE: NORMAL AT LIGTAS";
         }
     }
 
     // ========================================================
-    // 5. SUPABASE REALTIME STREAM
+    // 5. SUPABASE REALTIME SYNC
     // ========================================================
     function startSupabaseSync() {
         if (!supabaseClient) return;
 
+        const connPill = document.getElementById('conn-pill');
+        const connTextEN = document.getElementById('conn-text-en');
+        const connTextTL = document.getElementById('conn-text-tl');
+
+        // Fetch latest record on startup
         supabaseClient
             .from('dike_data')
             .select('*')
-            .order('created_at', { ascending: false })
+            .order('id', { ascending: false })
             .limit(1)
-            .then(({ data }) => {
-                if (data && data.length > 0) applyTelemetry(data[0]);
+            .then(({ data, error }) => {
+                if (error) {
+                    console.warn("Initial telemetry fetch error:", error.message);
+                } else if (data && data.length > 0) {
+                    applyTelemetry(data[0]);
+                }
             });
 
-        supabaseClient.channel('public:dike_data')
+        // Listen for new inserts coming from Wokwi or physical ESP32
+        const channel = supabaseClient
+            .channel('dike-telemetry')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
             })
-            .subscribe();
+            .subscribe((status) => {
+                if (status === 'SUBSCRIBED') {
+                    connPill.classList.remove('offline');
+                    connTextEN.innerText = "STREAM: LIVE";
+                    connTextTL.innerText = "KONEKSIYON: AKTIBO";
+                } else if (status === 'CHANNEL_ERROR' || status === 'CLOSED') {
+                    connPill.classList.add('offline');
+                    connTextEN.innerText = "STREAM: OFFLINE";
+                    connTextTL.innerText = "KONEKSIYON: NAPUTOL";
+                }
+            });
     }
 
     // ========================================================
@@ -625,14 +644,14 @@
                 leafletMap = L.map('map-container').setView(daranganCoord, 15);
 
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap'
+                    attribution: '© OpenStreetMap contributors'
                 }).addTo(leafletMap);
 
                 L.marker(daranganCoord).addTo(leafletMap).bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Monitoring Point");
                 L.marker([14.4820, 121.1810]).addTo(leafletMap).bindPopup("<b>Darangan Elementary School</b><br>Primary Evacuation Center");
                 L.marker([14.4750, 121.1760]).addTo(leafletMap).bindPopup("<b>Barangay Covered Court</b><br>Relief Staging Area");
             } catch (err) {
-                console.error("Leaflet initialization error:", err);
+                console.error("Leaflet init error:", err);
             }
         } else {
             leafletMap.invalidateSize();
@@ -640,7 +659,7 @@
     }
 
     // ========================================================
-    // 7. VERIFIED DATABASE FORM DISPATCHERS
+    // 7. FORM SUBMISSIONS
     // ========================================================
     window.registerSMS = async function() {
         const phone = document.getElementById('subPhone').value.trim();
@@ -659,7 +678,6 @@
         const { error } = await supabaseClient.from('sms_subscribers').insert([{ phone_number: phone }]);
 
         if (error) {
-            console.error("Supabase insert error:", error);
             showToast(isTagalog ? "❌ Bigo: " + error.message : "❌ Failed: " + error.message);
         } else {
             showToast(isTagalog ? "✅ Matagumpay na naitala ang iyong numero!" : "✅ Phone number enrolled in SMS alerts!");
@@ -684,7 +702,6 @@
         const { error } = await supabaseClient.from('hazard_reports').insert([{ description: text }]);
 
         if (error) {
-            console.error("Supabase insert error:", error);
             showToast(isTagalog ? "❌ Bigo: " + error.message : "❌ Failed: " + error.message);
         } else {
             showToast(isTagalog ? "✅ Naipadala ang iyong ulat sa DRRMO!" : "✅ Hazard report submitted to DRRMO desk!");
@@ -692,7 +709,7 @@
         }
     };
 
-    // Initialize after DOM is ready
+    // DOM Ready Initialization
     document.addEventListener('DOMContentLoaded', () => {
         initAllCharts();
         startSupabaseSync();
