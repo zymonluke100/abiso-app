@@ -4,13 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ABISO | Darangan Station</title>
+    
     <!-- Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <!-- link to your CSS file -->
-    <link rel="stylesheet" href="style.css">
+
+    <style>
+        :root {
+            --rizal-blue: #0038A8; --rizal-bg: #F0F4FF; --bg: #F8F9FC; --card: #FFFFFF;
+            --text: #1A1C1E; --text-sub: #6C757D; --safe: #28A745; --warn: #FF9800;
+            --danger: #DC3545; --air-color: #00897B; --solar-color: #E67E22;
+            --nav-bg: #FFFFFF; --nav-border: #EEEEEE;
+        }
+        [data-theme="dark"] {
+            --rizal-blue: #4D8BFF; --bg: #0B0E14; --card: #161B22; --text: #F0F6FC;
+            --text-sub: #8B949E; --nav-bg: #161B22; --rizal-bg: #1C2128; --nav-border: #30363D;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; transition: background 0.3s, color 0.3s; }
+        body { background-color: var(--bg); margin: 0; color: var(--text); overflow-x: hidden; font-size: 16px; width: 100%; }
+
+        /* --- UI LAYOUT --- */
+        .app-container { display: flex; min-height: 100vh; }
+        
+        /* Desktop Sidebar */
+        aside.sidebar { 
+            width: 280px; background: var(--nav-bg); border-right: 1px solid var(--nav-border);
+            display: none; flex-direction: column; position: sticky; top: 0; height: 100vh; 
+            padding: 30px 20px; z-index: 1001; 
+        }
+        .main-content { flex: 1; min-width: 0; position: relative; }
+
+        /* Mobile Bottom Nav - FIXED FOR PHONE */
+        nav.mobile-nav { 
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 75px; 
+            background: var(--nav-bg); display: flex; justify-content: space-around; 
+            border-top: 1px solid var(--nav-border); z-index: 9999 !important; 
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .nav-btn { 
+            background: none; border: none; color: var(--text-sub); 
+            display: flex; flex-direction: column; align-items: center; 
+            font-size: 10px; font-weight: 800; cursor: pointer; flex: 1;
+            justify-content: center; height: 100%;
+        }
+        .nav-btn.active { color: var(--rizal-blue); }
+        .nav-btn svg { width: 24px; height: 24px; margin-bottom: 4px; pointer-events: none; }
+        
+        .sidebar .nav-btn { flex-direction: row; font-size: 15px; gap: 15px; margin-bottom: 10px; padding: 15px; border-radius: 15px; width: 100%; text-align: left; }
+        .sidebar .nav-btn.active { background: var(--rizal-bg); }
+
+        /* Header */
+        header { background: linear-gradient(135deg, var(--rizal-blue) 0%, #001A4D 100%); color: white; padding: 25px 20px; }
+        .header-inner { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; width: 100%; }
+        .btn-tool { background: rgba(255,255,255,0.2); border: none; color: white; padding: 10px 15px; border-radius: 12px; font-size: 12px; font-weight: bold; cursor: pointer; }
+
+        /* Pages */
+        .page { display: none; padding: 15px; padding-bottom: 100px; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards */
+        .card { background: var(--card); border-radius: 28px; padding: 25px; margin-bottom: 20px; border: 1px solid rgba(0,0,0,0.02); box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
+        .card-header { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 15px; display: block; }
+        .big-val { font-size: 52px; font-weight: 900; }
+        .unit { font-size: 22px; color: var(--text-sub); margin-left: 5px; }
+
+        .status-pill { padding: 8px 16px; border-radius: 50px; font-size: 11px; font-weight: 800; background: var(--safe); color: white; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px; }
+        .pulse { width: 8px; height: 8px; background: white; border-radius: 50%; animation: pulse-anim 2s infinite; }
+        @keyframes pulse-anim { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .chart-box { height: 180px; width: 100%; margin: 15px 0; }
+        .integrated-guide { border-top: 1px solid rgba(0,0,0,0.1); margin-top: 15px; padding-top: 15px; }
+        .guide-row { display: flex; gap: 12px; margin-bottom: 12px; font-size: 14px; line-height: 1.4; }
+        .dot { width: 12px; height: 12px; border-radius: 50%; margin-top: 4px; flex-shrink: 0; }
+
+        .stats-mini { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: var(--rizal-bg); padding: 15px; border-radius: 15px; text-align: center; }
+        .month-selector { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid var(--rizal-blue); background: var(--rizal-bg); font-weight: 800; color: var(--rizal-blue); margin-bottom: 20px; cursor: pointer; outline: none; }
+        .boomer-note { background: var(--rizal-bg); padding: 15px; border-radius: 15px; font-weight: 700; border-left: 5px solid var(--rizal-blue); font-size: 14px; margin-bottom: 15px; }
+
+        .track { height: 12px; background: rgba(0,0,0,0.1); border-radius: 10px; overflow: hidden; margin-top: 10px; }
+        .fill { height: 100%; background: var(--rizal-blue); transition: width 1s; width: 65%; }
+
+        .contact-card { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: var(--rizal-bg); border-radius: 20px; margin-bottom: 10px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 15px; }
+        .call-btn { background: var(--rizal-blue); color: white; padding: 8px 14px; border-radius: 10px; font-size: 12px; }
+        .sms-input, .bug-input { width: 100%; padding: 18px; border-radius: 15px; background: var(--bg); color: var(--text); border: 2px solid var(--rizal-bg); margin: 10px 0; font-weight: 700; font-size: 16px; outline: none;}
+        .btn-main { width: 100%; padding: 18px; border-radius: 15px; border: none; background: var(--rizal-blue); color: white; font-weight: 900; cursor: pointer; font-size: 16px; }
+
+        @media (min-width: 1024px) {
+            aside.sidebar { display: flex; }
+            nav.mobile-nav { display: none; }
+            header { border-radius: 0; padding: 30px 40px; }
+            .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+            .page { padding: 40px; }
+        }
+
+        /* Language toggle logic */
+        [data-lang="en"] .lang-tl { display: none; }
+        [data-lang="tl"] .lang-en { display: none; }
+    </style>
 </head>
 <body>
 
@@ -18,90 +114,125 @@
     <!-- Desktop Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
-            <h1 class="logo">ABISO</h1>
-            <span class="station-id">STATION BD-01</span>
+            <h1 style="color:var(--rizal-blue); font-weight:900; margin:0;">ABISO</h1>
+            <p style="font-size:11px; font-weight:800; color:var(--text-sub);">DARANGAN STATION BD-01</p>
         </div>
-        <nav class="sidebar-nav">
-            <button onclick="nav('water')" class="nav-btn active">
+        <div style="margin-top:40px">
+            <button onclick="nav('water')" class="nav-btn active" id="sd-water">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg>
-                <span class="lang-en">Water Hub</span><span class="lang-tl">Tab ng Tubig</span>
+                <span class="lang-en">Water Hub</span><span class="lang-tl">Level ng Tubig</span>
             </button>
-            <button onclick="nav('air')" class="nav-btn">
+            <button onclick="nav('air')" class="nav-btn" id="sd-air">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg>
-                <span class="lang-en">Air Quality</span><span class="lang-tl">Kalidad ng Hangin</span>
+                <span class="lang-en">Air Quality</span><span class="lang-tl">Hangin Hub</span>
             </button>
-            <button onclick="nav('history')" class="nav-btn">
+            <button onclick="nav('history')" class="nav-btn" id="sd-history">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
-                <span class="lang-en">Station Logs</span><span class="lang-tl">Ulat at Logs</span>
+                <span class="lang-en">Station Logs</span><span class="lang-tl">Logs ng Station</span>
             </button>
-            <button onclick="nav('services')" class="nav-btn">
+            <button onclick="nav('services')" class="nav-btn" id="sd-services">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M8 11h8M12 7v8"/></svg>
                 <span class="lang-en">Help Hub</span><span class="lang-tl">Tulong Hub</span>
             </button>
-        </nav>
+        </div>
     </aside>
 
     <div class="main-content">
         <header>
             <div class="header-inner">
                 <div class="brand">
-                    <h2 class="lang-en">Dashboard</h2><h2 class="lang-tl">Dashboard</h2>
-                    <p>DARANGAN, BINANGONAN</p>
+                    <h2 style="margin:0; font-size:20px" class="lang-en">ABISO Dashboard</h2>
+                    <h2 style="margin:0; font-size:20px" class="lang-tl">ABISO Dashboard</h2>
+                    <span style="font-size:11px; font-weight:700; opacity:0.8;">DARANGAN, BINANGONAN</span>
                 </div>
                 <div class="controls">
                     <button class="btn-tool" onclick="toggleLang()" id="langBtn">Tagalog</button>
-                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn">☀️ Mode</button>
+                    <button class="btn-tool" onclick="toggleTheme()" id="thBtn">🌙 Mode</button>
                 </div>
             </div>
         </header>
 
-        <!-- WATER TAB -->
+        <!-- WATER PAGE -->
         <main id="water" class="page active">
             <div id="live-pill-w" class="status-pill"><div class="pulse"></div><span class="lang-en">STATUS: NORMAL</span><span class="lang-tl">STATUS: LIGTAS</span></div>
             <div class="dashboard-grid">
-                <div class="card highlight-blue">
-                    <span class="card-header lang-en">Live Dike Level</span><span class="card-header lang-tl">Live na Lebel</span>
-                    <div class="val-display"><span class="big-val" id="cur-w">0.00</span><span class="unit">m</span></div>
-                    <div class="chart-container"><canvas id="liveWChart"></canvas></div>
+                <div class="card">
+                    <span class="card-header lang-en">Live Dike Level</span><span class="card-header lang-tl">Live na Lebel ng Tubig</span>
+                    <div style="color: var(--rizal-blue); margin-bottom: 20px;"><span class="big-val" id="cur-w">0.00</span><span class="unit">m</span></div>
+                    <div class="chart-box"><canvas id="liveWChart"></canvas></div>
+                    
                     <div class="integrated-guide">
-                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b class="lang-en">Safe (0-1.0m)</b><b class="lang-tl">Ligtas (0-1.0m)</b><br><span class="lang-en">Water level is normal.</span><span class="lang-tl">Normal ang tubig sa dike.</span></p></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b class="lang-en">Danger (1.5m+)</b><b class="lang-tl">Delikado (1.5m+)</b><br><span class="lang-en">Evacuate immediately.</span><span class="lang-tl">Lumikas na po agad.</span></p></div>
+                        <span class="card-header lang-en">Instructions</span><span class="card-header lang-tl">Gabay sa Pagbasa</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b class="lang-en">Safe (0-1.0m):</b><b class="lang-tl">Ligtas (0-1.0m):</b><br><span class="lang-en">Normal water level.</span><span class="lang-tl">Normal ang tubig sa dike.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b class="lang-en">Danger (1.6m+):</b><b class="lang-tl">Delikado (1.6m+):</b><br><span class="lang-en">Prepare to evacuate.</span><span class="lang-tl">Lumikas na po agad.</span></p></div>
                     </div>
+                </div>
+
+                <div class="card">
+                    <span class="card-header lang-en">History Reports</span><span class="card-header lang-tl">Kasaysayan ng Buwan</span>
+                    <select class="month-selector" id="wMonth" onchange="updateHistory()">
+                        <option value="0">January 2026</option><option value="1">February</option><option value="2">March</option><option value="3">April</option><option value="4">May</option><option value="5">June</option><option value="6" selected>July 2026</option><option value="7">August</option><option value="8">September</option><option value="9">October</option><option value="10">November</option><option value="11">December</option>
+                    </select>
+                    <div class="stats-mini"><div class="stat-box"><span>AVG</span><b id="avg-w">0.74m</b></div><div class="stat-box"><span>PEAK</span><b id="peak-w" style="color:var(--danger)">1.45m</b></div></div>
+                    <p class="boomer-note" id="w-summary"><span class="lang-en">Summary: Water stayed safe this month.</span><span class="lang-tl">Ulat: Naging ligtas ang tubig nitong buwan.</span></p>
+                    <div class="chart-box"><canvas id="histWChart"></canvas></div>
                 </div>
             </div>
         </main>
 
-        <!-- AIR TAB -->
+        <!-- AIR PAGE -->
         <section id="air" class="page">
             <div id="live-pill-a" class="status-pill" style="background:var(--safe)"><span class="lang-en">AIR: GOOD</span><span class="lang-tl">HANGIN: MABUTI</span></div>
-            <div class="card highlight-teal">
-                <span class="card-header">Live AQI (PM2.5)</span>
-                <div class="val-display" style="color:var(--air-color)"><span class="big-val" id="cur-a">0</span><span class="unit">AQI</span></div>
-                <div class="chart-container"><canvas id="liveAChart"></canvas></div>
+            <div class="dashboard-grid">
+                <div class="card">
+                    <span class="card-header lang-en">Live Air Quality</span><span class="card-header lang-tl">Live na Hangin</span>
+                    <div style="color: var(--air-color); margin-bottom: 20px;"><span class="big-val" id="cur-a">0</span><span class="unit">AQI</span></div>
+                    <div class="chart-box"><canvas id="liveAChart"></canvas></div>
+                    <div class="integrated-guide">
+                        <span class="card-header">Health Instructions</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><p><b>0-50: Good.</b> <span class="lang-tl">Sariwa ang hangin.</span></p></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b>101+: Bad.</b> <span class="lang-tl">Mag-mask po lalabas.</span></p></div>
+                    </div>
+                </div>
+                <div class="card">
+                    <span class="card-header">Monthly Summary</span>
+                    <div class="stats-mini"><div class="stat-box"><span>AVG</span><b>22 AQI</b></div><div class="stat-box"><span>PEAK</span><b>38 AQI</b></div></div>
+                    <div class="chart-box"><canvas id="histAChart"></canvas></div>
+                </div>
             </div>
         </section>
 
-        <!-- LOGS TAB -->
+        <!-- LOGS PAGE -->
         <section id="history" class="page">
             <div class="card">
-                <span class="card-header">Station Status</span>
+                <span class="card-header lang-en">Station Status</span><span class="card-header lang-tl">Kondisyon ng Station</span>
                 <p><b>SOLAR BATT: <span id="cur-s">0</span>%</b></p>
                 <div class="track"><div class="fill" id="solarFill"></div></div>
-                <p style="font-size:12px; color:var(--text-sub); margin-top:20px;">System updates in real-time via Supabase.</p>
+                <p style="font-size:13px; color:var(--text-sub); margin-top:20px;">Memory resets every 3 days.</p>
             </div>
         </section>
 
-        <!-- HELP TAB -->
+        <!-- HELP PAGE -->
         <section id="services" class="page">
+            <div class="card" style="background:var(--rizal-blue); color:white;">
+                <h3 class="lang-tl" style="margin:0;">Register sa Text Alert</h3>
+                <input type="tel" class="sms-input" placeholder="09XXXXXXXXX">
+                <button class="btn-main" style="background:white; color:var(--rizal-blue);">REGISTER</button>
+            </div>
+            <div class="card">
+                <h3 class="lang-tl">Mga Hotline</h3>
+                <a href="tel:911" class="contact-card"><span>B-RESCUE</span><div class="call-btn">CALL</div></a>
+                <a href="tel:0284511647" class="contact-card"><span>Brgy Hall</span><div class="call-btn">CALL</div></a>
+            </div>
             <div class="card">
                 <h3 class="lang-tl">I-report ang Problema</h3>
-                <textarea class="bug-input" id="bugReport" placeholder="I-type dito ang problema sa app..."></textarea>
-                <button class="btn-main" onclick="alert('Sent!')">SEND REPORT</button>
+                <textarea class="bug-input" placeholder="Ano ang problema?"></textarea>
+                <button class="btn-main" style="background:var(--rizal-blue); color:white;">SEND REPORT</button>
             </div>
         </section>
     </div>
 
-    <!-- Mobile Bottom Nav -->
+    <!-- MOBILE NAV -->
     <nav class="mobile-nav">
         <button onclick="nav('water')" class="nav-btn active" id="mb-water"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/></svg><span>WATER</span></button>
         <button onclick="nav('air')" class="nav-btn" id="mb-air"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M2 17h12M8 7h14"/></svg><span>AIR</span></button>
@@ -110,7 +241,68 @@
     </nav>
 </div>
 
-<!-- link to your JavaScript file -->
-<script src="script.js"></script>
+<script>
+    // 1. SUPABASE
+    const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+    // 2. NAV
+    function nav(id) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        const target = document.getElementById(id);
+        if(target) target.classList.add('active');
+        const btns = document.querySelectorAll('.nav-btn');
+        btns.forEach(btn => {
+            if(btn.getAttribute('onclick').includes(`'${id}'`)) btn.classList.add('active');
+        });
+        window.scrollTo(0,0);
+    }
+
+    // 3. SETTINGS
+    function toggleLang() {
+        const h = document.documentElement;
+        const isEng = h.getAttribute('data-lang') === 'en';
+        h.setAttribute('data-lang', isEng ? 'tl' : 'en');
+        document.getElementById('langBtn').innerText = isEng ? 'English' : 'Tagalog';
+    }
+    function toggleTheme() {
+        const h = document.documentElement;
+        const current = h.getAttribute('data-theme');
+        h.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+        document.getElementById('thBtn').innerText = current === 'light' ? '☀️ Mode' : '🌙 Mode';
+    }
+
+    // 4. CHARTS
+    const cfg = { responsive: true, maintainAspectRatio: false, animation: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false } } };
+    const lw = new Chart(document.getElementById('liveWChart').getContext('2d'), { type: 'line', data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0,0,0,0,0,0], borderColor: '#0038A8', fill: true, backgroundColor: 'rgba(0,56,168,0.05)', pointRadius: 0 }] }, options: cfg });
+    const la = new Chart(document.getElementById('liveAChart').getContext('2d'), { type: 'line', data: { labels: [1,2,3,4,5,6], datasets: [{ data: [0,0,0,0,0,0], borderColor: '#00897B', fill: true, backgroundColor: 'rgba(0,137,123,0.05)', pointRadius: 0 }] }, options: cfg });
+    const hw = new Chart(document.getElementById('histWChart').getContext('2d'), { type: 'bar', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [0.6, 0.9, 0.7, 1.1], backgroundColor: '#0038A8', borderRadius: 10 }] }, options: cfg });
+    const ha = new Chart(document.getElementById('histAChart').getContext('2d'), { type: 'line', data: { labels: ['W1','W2','W3','W4'], datasets: [{ data: [15, 25, 18, 38], borderColor: '#00897B', tension: 0.3 }] }, options: cfg });
+
+    // 5. LIVE SYNC
+    supabase.channel('public:dike_data')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
+        const data = payload.new;
+        document.getElementById('cur-w').innerText = data.water.toFixed(2);
+        document.getElementById('cur-a').innerText = data.air;
+        document.getElementById('cur-s').innerText = data.solar;
+        document.getElementById('solarFill').style.width = data.solar + "%";
+        lw.data.datasets[0].data.shift(); lw.data.datasets[0].data.push(data.water); lw.update('none');
+        la.data.datasets[0].data.shift(); la.data.datasets[0].data.push(data.air); la.update('none');
+        const wPill = document.getElementById('live-pill-w');
+        if (data.water > 1.5) { wPill.style.background = 'var(--danger)'; wPill.innerText = "STATUS: DELIKADO"; }
+        else { wPill.style.background = 'var(--safe)'; wPill.innerText = "STATUS: LIGTAS"; }
+        const aPill = document.getElementById('live-pill-a');
+        if (data.air > 100) { aPill.style.background = 'var(--danger)'; aPill.innerText = "HANGIN: MASAMA"; }
+        else { aPill.style.background = 'var(--safe)'; aPill.innerText = "HANGIN: MABUTI"; }
+      }).subscribe();
+
+    function updateHistory() {
+        hw.data.datasets[0].data = Array.from({length: 4}, () => (0.4 + Math.random()).toFixed(2));
+        hw.update();
+    }
+</script>
 </body>
 </html>
