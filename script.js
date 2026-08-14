@@ -1,7 +1,7 @@
 // 1. SUPABASE CONNECTION
 const supabaseUrl = 'https://xhrzurqxzfaktfqawaru.supabase.co';
 // I have put the key inside the quotes properly for you here:
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MjM0NDIxMDQsImV4cCI6MjAzOTAxODEwNH0.wkdbAsLeYsGiF7k5SlLQzmMXp1DG1x6FQ89RuzhvYQQ';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inhocnp1cnF4emZha3RmcWF3YXJ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODY2OTgyMzgsImV4cCI6MjEwMjI3NDIzOH0.WkdbAsleYsGif7k5slLQzmMXplDGlx6FQ89RuzHvYQQ';
 const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 // 2. NAVIGATION (Clicking Tabs)
