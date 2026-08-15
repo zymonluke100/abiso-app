@@ -700,7 +700,7 @@
             });
 
         supabaseClient
-            .channel('dike-telemetry-v4')
+            .channel('dike-telemetry-v5')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
             })
@@ -718,7 +718,7 @@
     }
 
     // ========================================================
-    // 6. INTERACTIVE MAP CONFIGURATION
+    // 6. ACCURATE INLAND EVACUATION MAP & CORRIDORS
     // ========================================================
     let leafletMap = null;
     function initEvacMap() {
@@ -727,12 +727,13 @@
 
         if (!leafletMap) {
             try {
-                const daranganStation = [14.4788, 121.1785];
-                const elemSchool = [14.4820, 121.1810];
-                const coveredCourt = [14.4750, 121.1760];
+                // Exact land coordinates for Barangay Darangan, Binangonan
+                const daranganStation = [14.4842, 121.1895]; // Dike Stand / Shoreline Access
+                const coveredCourt    = [14.4878, 121.1942]; // Brgy. Darangan Covered Court / Hall
+                const elemSchool      = [14.4925, 121.1980]; // Darangan Elementary School (Manila East Rd)
 
                 leafletMap = L.map('map-container', {
-                    center: daranganStation,
+                    center: [14.4885, 121.1940],
                     zoom: 15,
                     scrollWheelZoom: true
                 });
@@ -742,46 +743,52 @@
                     maxZoom: 19
                 }).addTo(leafletMap);
 
+                // Facility Markers
                 L.marker(daranganStation).addTo(leafletMap)
-                    .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Stand (Laguna de Bay)")
+                    .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Stand (Laguna de Bay Coast)")
                     .openPopup();
 
-                L.marker(elemSchool).addTo(leafletMap)
-                    .bindPopup("<b>Darangan Elementary School</b><br>Primary High-Ground Shelter<br><b>Capacity:</b> 450 Persons");
-
                 L.marker(coveredCourt).addTo(leafletMap)
-                    .bindPopup("<b>Barangay Covered Court</b><br>Relief Staging & Secondary Center<br><b>Capacity:</b> 200 Persons");
+                    .bindPopup("<b>Barangay Covered Court</b><br>Secondary Staging & Relief Center<br><b>Capacity:</b> 200 Persons");
 
-                const route1 = [
+                L.marker(elemSchool).addTo(leafletMap)
+                    .bindPopup("<b>Darangan Elementary School</b><br>Primary High-Ground Evacuation Center<br><b>Capacity:</b> 450 Persons");
+
+                // Route 1: Inland corridor toward Elementary School
+                const routeToSchool = [
                     daranganStation,
-                    [14.4795, 121.1790],
-                    [14.4808, 121.1802],
+                    [14.4860, 121.1920],
+                    [14.4890, 121.1950],
+                    [14.4910, 121.1965],
                     elemSchool
                 ];
-                L.polyline(route1, { color: '#0038A8', weight: 4, dashArray: '6, 6' }).addTo(leafletMap)
-                    .bindPopup("<b>Primary Evacuation Corridor</b><br>Follow road north toward higher ground.");
+                L.polyline(routeToSchool, { color: '#0038A8', weight: 5, dashArray: '8, 8' }).addTo(leafletMap)
+                    .bindPopup("<b>Primary Evacuation Corridor</b><br>Inland road path toward Darangan Elementary School");
 
-                const route2 = [
+                // Route 2: Access road to Covered Court & Barangay Hall
+                const routeToCourt = [
                     daranganStation,
-                    [14.4770, 121.1775],
+                    [14.4860, 121.1920],
                     coveredCourt
                 ];
-                L.polyline(route2, { color: '#28A745', weight: 3, dashArray: '4, 4' }).addTo(leafletMap)
-                    .bindPopup("<b>Secondary Route</b><br>Direct access to Covered Court");
+                L.polyline(routeToCourt, { color: '#28A745', weight: 4, dashArray: '6, 6' }).addTo(leafletMap)
+                    .bindPopup("<b>Secondary Route</b><br>Access road to Covered Court & Barangay Hall");
 
+                // Shoreline Hazard Risk Buffer
                 const floodRiskZone = [
-                    [14.4740, 121.1750],
-                    [14.4780, 121.1775],
-                    [14.4830, 121.1800],
-                    [14.4820, 121.1825],
-                    [14.4730, 121.1775]
+                    [14.4815, 121.1870],
+                    [14.4845, 121.1890],
+                    [14.4880, 121.1915],
+                    [14.4865, 121.1935],
+                    [14.4830, 121.1905],
+                    [14.4805, 121.1885]
                 ];
                 L.polygon(floodRiskZone, { 
                     color: '#C0392B', 
                     fillColor: '#C0392B', 
                     fillOpacity: 0.16, 
                     weight: 1.5 
-                }).addTo(leafletMap).bindPopup("<b>Inundation Risk Perimeter</b><br>Clear coastal margin during Level 3 alerts.");
+                }).addTo(leafletMap).bindPopup("<b>Shoreline Inundation Risk Zone</b><br>Immediate evacuation required during Level 3 alerts.");
 
             } catch (err) {
                 console.error("Leaflet initialization error:", err);
@@ -790,7 +797,7 @@
         
         setTimeout(() => {
             if (leafletMap) leafletMap.invalidateSize();
-        }, 150);
+        }, 200);
     }
 
     // ========================================================
