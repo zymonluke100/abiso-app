@@ -476,40 +476,65 @@
     let audioCtx = null;
 
     // ========================================================
-    // 2. WEB AUDIO API SYNTHESIZED SIREN
+    // 2. MOBILE-UNLOCKED WEB AUDIO SIREN + VIBRATION ENGINE
     // ========================================================
+    function initMobileAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+    }
+
+    // Attach unlocker to user gestures
+    ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => {
+        document.addEventListener(evt, initMobileAudio, { once: true, passive: true });
+    });
+
     function playAlarmTone() {
         if (alarmMuted) return;
+
+        initMobileAudio();
+
+        if (!audioCtx) return;
+
         try {
-            if (!audioCtx) {
-                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            // Trigger Phone Vibration Pattern
+            if (navigator.vibrate) {
+                navigator.vibrate([300, 100, 300, 100, 300]);
             }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
+
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = 'sawtooth';
             
-            // Alternating two-tone emergency frequency
-            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
-            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime + 0.25); // D5
+            // Louder square/saw wave audible on small phone speakers
+            osc.type = 'triangle';
             
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+            const now = audioCtx.currentTime;
+            
+            // Alternating two-tone emergency frequencies (880Hz -> 660Hz)
+            osc.frequency.setValueAtTime(880, now);
+            osc.frequency.setValueAtTime(660, now + 0.2);
+            osc.frequency.setValueAtTime(880, now + 0.4);
+            
+            gain.gain.setValueAtTime(0.3, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
 
             osc.connect(gain);
             gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.5);
+            
+            osc.start(now);
+            osc.stop(now + 0.6);
         } catch (e) {
-            console.warn("Audio Context init required user interaction:", e);
+            console.warn("Mobile audio trigger warning:", e);
         }
     }
 
     window.silenceAlarm = function() {
         alarmMuted = true;
         document.getElementById('audio-alarm-banner').style.display = 'none';
+        if (navigator.vibrate) navigator.vibrate(0);
         showToast("Audio alert silenced for this session.");
     };
 
@@ -811,7 +836,7 @@
             });
 
         supabaseClient
-            .channel('dike-telemetry-v6')
+            .channel('dike-telemetry-v7')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
             })
