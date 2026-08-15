@@ -97,7 +97,7 @@
         /* Page Layout */
         .page { display: none; padding: 18px; max-width: 1200px; margin: 0 auto; width: 100%; }
         .page.active { display: block; animation: fadeIn 0.2s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; } }
 
         /* Stale Data Warning Banner */
         .stale-banner {
@@ -155,7 +155,7 @@
 
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: var(--card); color: var(--text); padding: 14px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-size: 13px; font-weight: 700; border-left: 5px solid var(--rizal-blue); pointer-events: auto; animation: toastIn 0.3s ease-out; }
-        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); } }
 
         @media (min-width: 1024px) {
             aside.sidebar { display: flex; }
@@ -223,7 +223,7 @@
 
         <!-- WATER VIEW -->
         <main id="water" class="page active" role="tabpanel">
-            <!-- Critical Siren Active Alert Banner -->
+            <!-- Critical Siren Alert Banner -->
             <div id="audio-alarm-banner" class="alarm-banner">
                 <div>
                     <span class="lang-en"><b>CRITICAL THRESHOLD REACHED:</b> Dike water level has reached evacuation point.</span>
@@ -241,7 +241,7 @@
             </div>
 
             <div class="sync-tracker">
-                <span id="last-sync-label">Last telemetry sync: Waiting for initial packet...</span>
+                <span class="sync-label">Last telemetry sync: Waiting for initial packet...</span>
             </div>
 
             <div id="live-pill-w" class="status-pill">
@@ -295,10 +295,16 @@
 
         <!-- AIR QUALITY VIEW -->
         <section id="air" class="page" role="tabpanel">
+            <div class="sync-tracker">
+                <span class="sync-label">Last telemetry sync: Waiting for initial packet...</span>
+            </div>
+
             <div id="live-pill-a" class="status-pill" style="background:var(--safe)">
-                <span class="lang-en" id="txt-pill-a-en">AIR QUALITY: OPTIMAL</span>
+                <div class="pulse"></div>
+                <span class="lang-en" id="txt-pill-a-en">AIR QUALITY: GOOD</span>
                 <span class="lang-tl" id="txt-pill-a-tl">KALIDAD NG HANGIN: MAAYOS</span>
             </div>
+
             <div class="dashboard-grid">
                 <div class="card">
                     <span class="card-header lang-en">Live Ambient PM2.5 Index</span>
@@ -500,20 +506,15 @@
         if (!audioCtx) return;
 
         try {
-            // Trigger Phone Vibration Pattern
             if (navigator.vibrate) {
                 navigator.vibrate([300, 100, 300, 100, 300]);
             }
 
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            
-            // Louder square/saw wave audible on small phone speakers
             osc.type = 'triangle';
             
             const now = audioCtx.currentTime;
-            
-            // Alternating two-tone emergency frequencies (880Hz -> 660Hz)
             osc.frequency.setValueAtTime(880, now);
             osc.frequency.setValueAtTime(660, now + 0.2);
             osc.frequency.setValueAtTime(880, now + 0.4);
@@ -708,7 +709,7 @@
     };
 
     // ========================================================
-    // 6. TELEMETRY & STALENESS ENGINE
+    // 6. TELEMETRY & STALENESS ENGINE (WATER + AIR DYNAMIC)
     // ========================================================
     function applyTelemetry(data) {
         if (!data) return;
@@ -737,6 +738,7 @@
             la.update('none');
         }
 
+        // --- 1. Water Level Dynamic Pill & Siren ---
         const wPill = document.getElementById('live-pill-w');
         const txtW_EN = document.getElementById('txt-pill-w-en');
         const txtW_TL = document.getElementById('txt-pill-w-tl');
@@ -767,6 +769,31 @@
             alarmBanner.style.display = 'none';
             alarmMuted = false;
         }
+
+        // --- 2. Air Quality (AQI) Dynamic Pill & Colors ---
+        const aPill = document.getElementById('live-pill-a');
+        const txtA_EN = document.getElementById('txt-pill-a-en');
+        const txtA_TL = document.getElementById('txt-pill-a-tl');
+
+        if (aPill && txtA_EN && txtA_TL) {
+            if (air >= 151) {
+                aPill.style.background = 'var(--danger)';
+                txtA_EN.innerText = "AIR QUALITY: UNHEALTHY";
+                txtA_TL.innerText = "KALIDAD NG HANGIN: MAPANGANIB";
+            } else if (air >= 101) {
+                aPill.style.background = 'var(--warn)';
+                txtA_EN.innerText = "AIR QUALITY: UNHEALTHY (SENSITIVE)";
+                txtA_TL.innerText = "KALIDAD NG HANGIN: HINDI LIGTAS SA MAY SAKIT";
+            } else if (air >= 51) {
+                aPill.style.background = 'var(--alert)';
+                txtA_EN.innerText = "AIR QUALITY: MODERATE";
+                txtA_TL.innerText = "KALIDAD NG HANGIN: KATAMTAMAN";
+            } else {
+                aPill.style.background = 'var(--safe)';
+                txtA_EN.innerText = "AIR QUALITY: GOOD";
+                txtA_TL.innerText = "KALIDAD NG HANGIN: MAAYOS";
+            }
+        }
     }
 
     function renderRelativeTime() {
@@ -774,9 +801,9 @@
 
         const now = Date.now();
         const elapsedSec = Math.max(0, Math.floor((now - lastPacketTime) / 1000));
-        const timeStr = new Date(lastPacketTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const timeStr = new Date(lastPacketTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
         
-        const labelEl = document.getElementById('last-sync-label');
+        const syncLabels = document.querySelectorAll('.sync-label');
         const bannerEl = document.getElementById('stale-alert-banner');
         const connPill = document.getElementById('conn-pill');
         const staleTimeEn = document.getElementById('stale-time-val');
@@ -793,7 +820,9 @@
             document.getElementById('conn-text-tl').innerText = "KONEKSIYON: WALANG SENSOR";
 
             const elapsedMin = Math.floor(elapsedSec / 60);
-            labelEl.innerHTML = `<span style="color:#D35400; font-weight:700;">${isTagalog ? `Huling ulat: ${elapsedMin}m na ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedMin}m ago (${timeStr})`}</span>`;
+            syncLabels.forEach(lbl => {
+                lbl.innerHTML = `<span style="color:#D35400; font-weight:700;">${isTagalog ? `Huling ulat: ${elapsedMin}m na ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedMin}m ago (${timeStr})`}</span>`;
+            });
         } else {
             bannerEl.style.display = 'none';
             connPill.classList.remove('stale');
@@ -801,11 +830,13 @@
             document.getElementById('conn-text-en').innerText = "STREAM: LIVE";
             document.getElementById('conn-text-tl').innerText = "KONEKSIYON: AKTIBO";
 
-            if (elapsedSec < 5) {
-                labelEl.innerText = isTagalog ? `Huling ulat: Kararating lang (${timeStr})` : `Last telemetry sync: Just now (${timeStr})`;
-            } else {
-                labelEl.innerText = isTagalog ? `Huling ulat: ${elapsedSec}s ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedSec}s ago (${timeStr})`;
-            }
+            syncLabels.forEach(lbl => {
+                if (elapsedSec < 5) {
+                    lbl.innerText = isTagalog ? `Huling ulat: Kararating lang (${timeStr})` : `Last telemetry sync: Just now (${timeStr})`;
+                } else {
+                    lbl.innerText = isTagalog ? `Huling ulat: ${elapsedSec}s ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedSec}s ago (${timeStr})`;
+                }
+            });
         }
     }
 
@@ -836,7 +867,7 @@
             });
 
         supabaseClient
-            .channel('dike-telemetry-v7')
+            .channel('dike-telemetry-v8')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
             })
