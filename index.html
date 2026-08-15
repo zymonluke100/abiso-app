@@ -157,6 +157,11 @@
         .toast { background: var(--card); color: var(--text); padding: 14px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-size: 13px; font-weight: 700; border-left: 5px solid var(--rizal-blue); pointer-events: auto; animation: toastIn 0.3s ease-out; }
         @keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); } }
 
+        /* Custom Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--rizal-bg); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--nav-border); border-radius: 3px; }
+
         @media (min-width: 1024px) {
             aside.sidebar { display: flex; }
             nav.mobile-nav { display: none; }
@@ -376,6 +381,43 @@
                         <span class="lang-tl">I-DOWNLOAD ANG TALAAN (CSV)</span>
                     </button>
                 </div>
+
+                <!-- LIVE TELEMETRY TABLE (NEWEST ENTRIES FIRST) -->
+                <div class="card full-width">
+                    <div class="card-header">
+                        <div>
+                            <span class="lang-en">Live Dike Telemetry Records</span>
+                            <span class="lang-tl">Kasalukuyang Talaan ng Datos sa Dike</span>
+                            <div style="font-size:10px; color:var(--text-sub); font-weight:600; text-transform:none; margin-top:2px;">
+                                <span class="lang-en">Sorted descending (newest observations on top)</span>
+                                <span class="lang-tl">Nakaayos nang pababa (pinakabagong ulat sa itaas)</span>
+                            </div>
+                        </div>
+                        <button class="btn-tool" onclick="loadTableLogs()" type="button" style="background:var(--rizal-blue); border:none; padding:6px 12px; font-size:11px;">
+                            <span class="lang-en">Refresh</span>
+                            <span class="lang-tl">Sariwain</span>
+                        </button>
+                    </div>
+                    
+                    <div style="overflow-x: auto; max-height: 380px; margin-top: 10px;" class="custom-scrollbar">
+                        <table style="width: 100%; border-collapse: collapse; font-size: 13px; text-align: left;">
+                            <thead>
+                                <tr style="border-bottom: 1.5px solid var(--nav-border); color: var(--text-sub); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                    <th style="padding: 10px 8px;">Log ID</th>
+                                    <th style="padding: 10px 8px;">Timestamp (PST)</th>
+                                    <th style="padding: 10px 8px;">Water Level (m)</th>
+                                    <th style="padding: 10px 8px;">Air (AQI)</th>
+                                    <th style="padding: 10px 8px;">Solar (%)</th>
+                                    <th style="padding: 10px 8px;">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table-body">
+                                <tr><td colspan="6" style="padding: 20px; text-align: center; color: var(--text-sub);">Loading database records...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
             </div>
         </section>
 
@@ -570,6 +612,9 @@
         if (pageId === 'services') {
             setTimeout(initEvacMap, 200);
         }
+        if (pageId === 'history') {
+            setTimeout(loadTableLogs, 100);
+        }
         window.scrollTo({ top: 0, behavior: 'instant' });
     };
 
@@ -601,7 +646,7 @@
     };
 
     // ========================================================
-    // 4. CSV TELEMETRY EXPORT ENGINE
+    // 4. CSV TELEMETRY EXPORT & TABLE LOGS ENGINE (DESCENDING)
     // ========================================================
     window.exportTelemetryCSV = async function() {
         showToast("Generating telemetry CSV export...");
@@ -612,7 +657,7 @@
                 const { data, error } = await supabaseClient
                     .from('dike_data')
                     .select('*')
-                    .order('id', { ascending: false })
+                    .order('created_at', { ascending: false }) // NEWEST FIRST
                     .limit(100);
 
                 if (!error && data && data.length > 0) {
@@ -632,6 +677,50 @@
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+    };
+
+    window.loadTableLogs = async function() {
+        const tbody = document.getElementById('logs-table-body');
+        if (!tbody || !supabaseClient) return;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('dike_data')
+                .select('*')
+                .order('created_at', { ascending: false }) // NEWEST FIRST
+                .limit(25);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                tbody.innerHTML = data.map(row => {
+                    const isDanger = parseFloat(row.water) >= 1.7;
+                    const isWarn = parseFloat(row.water) >= 1.4;
+                    const statusColor = isDanger ? 'var(--danger)' : (isWarn ? 'var(--warn)' : 'var(--safe)');
+                    const statusLabel = isDanger ? 'Critical' : (isWarn ? 'Warning' : 'Normal');
+
+                    return `
+                        <tr style="border-bottom: 1px solid var(--nav-border); transition: background 0.2s;">
+                            <td style="padding: 10px 8px; font-weight: 700;">#${row.id}</td>
+                            <td style="padding: 10px 8px; color: var(--text-sub);">${new Date(row.created_at).toLocaleString()}</td>
+                            <td style="padding: 10px 8px; font-weight: 800; color: var(--rizal-blue);">${parseFloat(row.water).toFixed(2)}m</td>
+                            <td style="padding: 10px 8px; font-weight: 800; color: var(--air-color);">${row.air} AQI</td>
+                            <td style="padding: 10px 8px; font-weight: 700; color: var(--solar-color);">${row.solar || 98}%</td>
+                            <td style="padding: 10px 8px;">
+                                <span style="display:inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 800; background: ${statusColor}; color: white;">
+                                    ${statusLabel}
+                                </span>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--text-sub);">No records found in database.</td></tr>';
+            }
+        } catch (err) {
+            console.error("Failed to populate telemetry table:", err);
+            tbody.innerHTML = '<tr><td colspan="6" style="padding: 16px; text-align: center; color: var(--danger);">Failed to load telemetry logs from Supabase.</td></tr>';
+        }
     };
 
     // ========================================================
@@ -855,7 +944,7 @@
         supabaseClient
             .from('dike_data')
             .select('*')
-            .order('id', { ascending: false })
+            .order('created_at', { ascending: false }) // NEWEST FIRST
             .limit(1)
             .then(({ data, error }) => {
                 if (!error && data && data.length > 0) {
@@ -870,6 +959,7 @@
             .channel('dike-telemetry-v8')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
+                loadTableLogs(); // Automatically append new records to top of table
             })
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
@@ -1041,6 +1131,7 @@
     document.addEventListener('DOMContentLoaded', () => {
         initAllCharts();
         startSupabaseSync();
+        loadTableLogs();
     });
 </script>
 </body>
