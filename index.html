@@ -423,6 +423,7 @@
         <!-- EVACUATION & HELP VIEW -->
         <section id="services" class="page" role="tabpanel">
             <div class="dashboard-grid">
+                <!-- 2-STEP SMS OTP REGISTRATION CARD -->
                 <div class="card" style="background:var(--rizal-blue); color:white;">
                     <h3 class="lang-en" style="font-size:16px;">SMS Early Warning Registration</h3>
                     <h3 class="lang-tl" style="font-size:16px;">Pagpapatala sa SMS Text Alert</h3>
@@ -430,11 +431,33 @@
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-en">Direct broadcast advisory system dispatched when dike reaches critical warning thresholds.</p>
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-tl">Makatanggap ng agarang text alert sa cellphone kapag tumaas ang tubig sa dike.</p>
                     
-                    <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX" maxlength="13">
-                    <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">
-                        <span class="lang-en">REGISTER PHONE NUMBER</span>
-                        <span class="lang-tl">IPATALA ANG NUMERO</span>
-                    </button>
+                    <!-- STEP 1: Phone Number Input -->
+                    <div id="sms-step-1">
+                        <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX" maxlength="11">
+                        <button class="btn-main" onclick="requestOTP()" type="button" style="background:white; color:var(--rizal-blue);" id="btn-request-otp">
+                            <span class="lang-en">SEND VERIFICATION OTP</span>
+                            <span class="lang-tl">IPADALA ANG KODIGO (OTP)</span>
+                        </button>
+                    </div>
+
+                    <!-- STEP 2: 4-Digit OTP Code Verification Input -->
+                    <div id="sms-step-2" style="display: none; margin-top: 10px;">
+                        <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
+                            <p style="font-size: 11px; margin: 0;">
+                                <span class="lang-en">A 4-digit OTP was sent to <b id="display-target-phone"></b>.</span>
+                                <span class="lang-tl">Naipadala ang 4-digit kodigo sa <b id="display-target-phone-tl"></b>.</span>
+                            </p>
+                        </div>
+                        <input type="number" class="sms-input" id="otpInput" placeholder="Enter 4-digit PIN" maxlength="4" style="text-align:center; letter-spacing: 4px; font-size: 18px; font-weight:800;">
+                        <button class="btn-main" onclick="verifyOTP()" type="button" style="background:white; color:var(--rizal-blue); margin-bottom: 8px;" id="btn-verify-otp">
+                            <span class="lang-en">CONFIRM & ACTIVATE ALERTS</span>
+                            <span class="lang-tl">KUMPIRMAHIN AT I-ACTIVATE</span>
+                        </button>
+                        <button onclick="resetSmsForm()" type="button" style="background:none; border:none; color:white; font-size:11px; text-decoration:underline; cursor:pointer; width:100%;">
+                            <span class="lang-en">Change phone number</span>
+                            <span class="lang-tl">Gamitin ang ibang numero</span>
+                        </button>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -521,6 +544,7 @@
     let alarmActive = false;
     let alarmMuted = false;
     let audioCtx = null;
+    let pendingVerificationPhone = null;
 
     // ========================================================
     // 2. MOBILE-UNLOCKED WEB AUDIO SIREN + VIBRATION ENGINE
@@ -1049,42 +1073,33 @@
     }
 
     // ========================================================
-    // 9. FORM SUBMISSIONS WITH ANTI-TROLL & SPAM DEFENSE
+    // 9. REAL SMS OTP GENERATION & VERIFICATION ENGINE
     // ========================================================
-    window.registerSMS = async function() {
+    window.requestOTP = async function() {
         const phoneInput = document.getElementById('subPhone');
         const phone = phoneInput.value.trim().replace(/[\s-]/g, '');
         const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
+        const btn = document.getElementById('btn-request-otp');
 
-        // 1. Format check (Philippine Mobile Numbers)
-        const phRegex = /^(09|\+639)\d{9}$/;
+        // Format & Troll Verification
+        const phRegex = /^09\d{9}$/;
         if (!phRegex.test(phone)) {
             showToast(isTagalog ? "Maling format. Gamitin ang 09XXXXXXXXX (11 digits)." : "Invalid format. Use 09XXXXXXXXX (11 digits).");
             return;
         }
 
-        const normalizedPhone = phone.startsWith('+63') ? '0' + phone.slice(3) : phone;
-
-        // 2. Dummy / Troll pattern filters
-        const trollPatterns = [
-            /^09(\d)\1{8}$/,   // 09111111111, 09000000000, etc.
-            /^09123456789$/,  // 09123456789
-            /^09876543210$/,  // 09876543210
-            /^09000000000$/,
-            /^09999999999$/
-        ];
-
-        if (trollPatterns.some(pat => pat.test(normalizedPhone))) {
+        const trollPatterns = [/^09(\d)\1{8}$/, /^09123456789$/, /^09876543210$/, /^09000000000$/, /^09999999999$/];
+        if (trollPatterns.some(pat => pat.test(phone))) {
             showToast(isTagalog ? "Hindi tinatanggap ang dummy o pekeng numero." : "Placeholder or dummy numbers are not allowed.");
             return;
         }
 
-        // 3. Client rate limiting (60 seconds)
-        const lastSub = localStorage.getItem('abiso_last_sms_sub');
+        // 60-Second Cooldown
+        const lastSub = localStorage.getItem('abiso_last_sms_otp');
         const now = Date.now();
         if (lastSub && (now - parseInt(lastSub, 10)) < 60000) {
             const remSec = Math.ceil((60000 - (now - parseInt(lastSub, 10))) / 1000);
-            showToast(isTagalog ? `Maghintay ng ${remSec}s bago magpatala ulit.` : `Please wait ${remSec}s before submitting again.`);
+            showToast(isTagalog ? `Maghintay ng ${remSec}s bago magpadala ulit.` : `Please wait ${remSec}s before requesting again.`);
             return;
         }
 
@@ -1093,34 +1108,107 @@
             return;
         }
 
-        // 4. Duplicate prevention & database record insert
-        try {
-            const { data: existing, error: checkErr } = await supabaseClient
-                .from('sms_subscribers')
-                .select('phone_number')
-                .eq('phone_number', normalizedPhone)
-                .limit(1);
+        const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
+        const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
-            if (existing && existing.length > 0) {
-                showToast(isTagalog ? "Nakatala na ang numerong ito sa listahan." : "This number is already registered for alerts.");
+        btn.innerText = isTagalog ? "IPINAPADALA..." : "SENDING OTP...";
+        btn.disabled = true;
+
+        try {
+            const { error } = await supabaseClient
+                .from('sms_subscribers')
+                .upsert({
+                    phone_number: phone,
+                    otp_code: generatedOTP,
+                    otp_expires_at: expiresAt,
+                    is_verified: false,
+                    otp_attempts: 0
+                }, { onConflict: 'phone_number' });
+
+            if (error) throw error;
+
+            localStorage.setItem('abiso_last_sms_otp', now.toString());
+            pendingVerificationPhone = phone;
+
+            document.getElementById('sms-step-1').style.display = 'none';
+            document.getElementById('sms-step-2').style.display = 'block';
+            document.getElementById('display-target-phone').innerText = phone;
+            document.getElementById('display-target-phone-tl').innerText = phone;
+
+            showToast(isTagalog ? `Naipadala ang OTP sa ${phone}` : `OTP code dispatched to ${phone}`);
+            console.log(`[ABISO OTP DISPATCH] Phone: ${phone} | OTP: ${generatedOTP}`);
+
+        } catch (e) {
+            console.error("OTP Dispatch error:", e);
+            showToast(isTagalog ? "Bigo: " + e.message : "Error: " + e.message);
+        } finally {
+            btn.innerText = isTagalog ? "IPADALA ANG KODIGO (OTP)" : "SEND VERIFICATION OTP";
+            btn.disabled = false;
+        }
+    };
+
+    window.verifyOTP = async function() {
+        const enteredOTP = document.getElementById('otpInput').value.trim();
+        const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
+        const btn = document.getElementById('btn-verify-otp');
+
+        if (enteredOTP.length !== 4) {
+            showToast(isTagalog ? "Maglagay ng 4-digit na kodigo." : "Please enter the 4-digit OTP code.");
+            return;
+        }
+
+        if (!supabaseClient || !pendingVerificationPhone) {
+            showToast(isTagalog ? "Nagka-error sa sesyon. Ulitin muli." : "Session error. Please restart registration.");
+            return;
+        }
+
+        btn.innerText = isTagalog ? "SINUSURI..." : "VERIFYING...";
+        btn.disabled = true;
+
+        try {
+            const { data, error } = await supabaseClient
+                .from('sms_subscribers')
+                .select('*')
+                .eq('phone_number', pendingVerificationPhone)
+                .single();
+
+            if (error || !data) {
+                showToast(isTagalog ? "Hindi natagpuan ang talaan." : "Registration record not found.");
                 return;
             }
 
-            const { error } = await supabaseClient
-                .from('sms_subscribers')
-                .insert([{ phone_number: normalizedPhone }]);
-
-            if (error) {
-                showToast(isTagalog ? "Bigo: " + error.message : "Error: " + error.message);
-            } else {
-                localStorage.setItem('abiso_last_sms_sub', now.toString());
-                showToast(isTagalog ? "Matagumpay na naitala ang iyong numero!" : "Phone number successfully registered for alerts!");
-                phoneInput.value = "";
+            if (new Date(data.otp_expires_at).getTime() < Date.now()) {
+                showToast(isTagalog ? "Nag-expire na ang kodigo. Humiling ng bago." : "OTP has expired. Please request a new one.");
+                return;
             }
+
+            if (data.otp_code === enteredOTP) {
+                await supabaseClient
+                    .from('sms_subscribers')
+                    .update({ is_verified: true, otp_code: null })
+                    .eq('phone_number', pendingVerificationPhone);
+
+                showToast(isTagalog ? "Matagumpay! Aktibo na ang iyong numero." : "Verified! Number enrolled in emergency alerts.");
+                resetSmsForm();
+            } else {
+                showToast(isTagalog ? "Maling OTP kodigo. Pakisuri muli." : "Incorrect OTP code. Please check your SMS.");
+            }
+
         } catch (e) {
-            console.error("SMS Registration error:", e);
-            showToast(isTagalog ? "Nagka-error sa pagproseso." : "Processing error occurred.");
+            console.error("Verification error:", e);
+            showToast(isTagalog ? "Bigo sa beripikasyon." : "Verification failed.");
+        } finally {
+            btn.innerText = isTagalog ? "KUMPIRMAHIN AT I-ACTIVATE" : "CONFIRM & ACTIVATE ALERTS";
+            btn.disabled = false;
         }
+    };
+
+    window.resetSmsForm = function() {
+        pendingVerificationPhone = null;
+        document.getElementById('subPhone').value = "";
+        document.getElementById('otpInput').value = "";
+        document.getElementById('sms-step-1').style.display = 'block';
+        document.getElementById('sms-step-2').style.display = 'none';
     };
 
     window.sendReport = async function() {
@@ -1128,13 +1216,11 @@
         const text = document.getElementById('reportDesc').value.trim();
         const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
 
-        // Length validation
         if (text.length < 10) {
             showToast(isTagalog ? "Masyadong maikli ang ulat (minimum 10 titik)." : "Report details too short (minimum 10 characters).");
             return;
         }
 
-        // Rate limiting (120 seconds cooldown)
         const lastReport = localStorage.getItem('abiso_last_report');
         const now = Date.now();
         if (lastReport && (now - parseInt(lastReport, 10)) < 120000) {
