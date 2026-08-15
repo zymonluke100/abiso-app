@@ -417,7 +417,6 @@
                         </table>
                     </div>
                 </div>
-
             </div>
         </section>
 
@@ -431,7 +430,7 @@
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-en">Direct broadcast advisory system dispatched when dike reaches critical warning thresholds.</p>
                     <p style="font-size:12px; margin: 6px 0 10px 0; opacity:0.9;" class="lang-tl">Makatanggap ng agarang text alert sa cellphone kapag tumaas ang tubig sa dike.</p>
                     
-                    <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX" maxlength="11">
+                    <input type="tel" class="sms-input" id="subPhone" placeholder="09XXXXXXXXX" maxlength="13">
                     <button class="btn-main" onclick="registerSMS()" type="button" style="background:white; color:var(--rizal-blue);">
                         <span class="lang-en">REGISTER PHONE NUMBER</span>
                         <span class="lang-tl">IPATALA ANG NUMERO</span>
@@ -475,7 +474,7 @@
                         <option value="Other Emergency">General Urgent Emergency (Ibang Emergency)</option>
                     </select>
 
-                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Describe the hazard details, precise location, and severity..."></textarea>
+                    <textarea class="bug-input" id="reportDesc" rows="3" placeholder="Describe the hazard details, precise location, and severity (minimum 10 characters)..."></textarea>
                     <button class="btn-main" onclick="sendReport()" type="button">
                         <span class="lang-en">SUBMIT TO DRRMO DESK</span>
                         <span class="lang-tl">IPADALA SA DRRMO</span>
@@ -535,16 +534,13 @@
         }
     }
 
-    // Attach unlocker to user gestures
     ['touchstart', 'touchend', 'click', 'keydown'].forEach(evt => {
         document.addEventListener(evt, initMobileAudio, { once: true, passive: true });
     });
 
     function playAlarmTone() {
         if (alarmMuted) return;
-
         initMobileAudio();
-
         if (!audioCtx) return;
 
         try {
@@ -657,7 +653,7 @@
                 const { data, error } = await supabaseClient
                     .from('dike_data')
                     .select('*')
-                    .order('created_at', { ascending: false }) // NEWEST FIRST
+                    .order('created_at', { ascending: false })
                     .limit(100);
 
                 if (!error && data && data.length > 0) {
@@ -687,7 +683,7 @@
             const { data, error } = await supabaseClient
                 .from('dike_data')
                 .select('*')
-                .order('created_at', { ascending: false }) // NEWEST FIRST
+                .order('created_at', { ascending: false })
                 .limit(25);
 
             if (error) throw error;
@@ -827,7 +823,7 @@
             la.update('none');
         }
 
-        // --- 1. Water Level Dynamic Pill & Siren ---
+        // Water Level Dynamic Pill & Siren
         const wPill = document.getElementById('live-pill-w');
         const txtW_EN = document.getElementById('txt-pill-w-en');
         const txtW_TL = document.getElementById('txt-pill-w-tl');
@@ -859,7 +855,7 @@
             alarmMuted = false;
         }
 
-        // --- 2. Air Quality (AQI) Dynamic Pill & Colors ---
+        // Air Quality (AQI) Dynamic Pill & Colors
         const aPill = document.getElementById('live-pill-a');
         const txtA_EN = document.getElementById('txt-pill-a-en');
         const txtA_TL = document.getElementById('txt-pill-a-tl');
@@ -876,7 +872,7 @@
             } else if (air >= 51) {
                 aPill.style.background = 'var(--alert)';
                 txtA_EN.innerText = "AIR QUALITY: MODERATE";
-                txtA_TL.innerText = "KALIDAD NG HANGIN: KATAMTAMAN";
+                txtA_TL.innerText = "KATAYUAN NG HANGIN: KATAMTAMAN";
             } else {
                 aPill.style.background = 'var(--safe)';
                 txtA_EN.innerText = "AIR QUALITY: GOOD";
@@ -944,7 +940,7 @@
         supabaseClient
             .from('dike_data')
             .select('*')
-            .order('created_at', { ascending: false }) // NEWEST FIRST
+            .order('created_at', { ascending: false })
             .limit(1)
             .then(({ data, error }) => {
                 if (!error && data && data.length > 0) {
@@ -959,7 +955,7 @@
             .channel('dike-telemetry-v8')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
-                loadTableLogs(); // Automatically append new records to top of table
+                loadTableLogs();
             })
             .subscribe((status) => {
                 if (status === 'SUBSCRIBED') {
@@ -1053,14 +1049,42 @@
     }
 
     // ========================================================
-    // 9. FORM SUBMISSIONS
+    // 9. FORM SUBMISSIONS WITH ANTI-TROLL & SPAM DEFENSE
     // ========================================================
     window.registerSMS = async function() {
-        const phone = document.getElementById('subPhone').value.trim();
+        const phoneInput = document.getElementById('subPhone');
+        const phone = phoneInput.value.trim().replace(/[\s-]/g, '');
         const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
 
-        if (phone.length < 11 || !phone.startsWith("09")) {
-            showToast(isTagalog ? "Maglagay ng wastong 11-digit mobile number (simula sa 09)." : "Please enter a valid 11-digit mobile number starting with 09.");
+        // 1. Format check (Philippine Mobile Numbers)
+        const phRegex = /^(09|\+639)\d{9}$/;
+        if (!phRegex.test(phone)) {
+            showToast(isTagalog ? "Maling format. Gamitin ang 09XXXXXXXXX (11 digits)." : "Invalid format. Use 09XXXXXXXXX (11 digits).");
+            return;
+        }
+
+        const normalizedPhone = phone.startsWith('+63') ? '0' + phone.slice(3) : phone;
+
+        // 2. Dummy / Troll pattern filters
+        const trollPatterns = [
+            /^09(\d)\1{8}$/,   // 09111111111, 09000000000, etc.
+            /^09123456789$/,  // 09123456789
+            /^09876543210$/,  // 09876543210
+            /^09000000000$/,
+            /^09999999999$/
+        ];
+
+        if (trollPatterns.some(pat => pat.test(normalizedPhone))) {
+            showToast(isTagalog ? "Hindi tinatanggap ang dummy o pekeng numero." : "Placeholder or dummy numbers are not allowed.");
+            return;
+        }
+
+        // 3. Client rate limiting (60 seconds)
+        const lastSub = localStorage.getItem('abiso_last_sms_sub');
+        const now = Date.now();
+        if (lastSub && (now - parseInt(lastSub, 10)) < 60000) {
+            const remSec = Math.ceil((60000 - (now - parseInt(lastSub, 10))) / 1000);
+            showToast(isTagalog ? `Maghintay ng ${remSec}s bago magpatala ulit.` : `Please wait ${remSec}s before submitting again.`);
             return;
         }
 
@@ -1069,13 +1093,33 @@
             return;
         }
 
-        const { error } = await supabaseClient.from('sms_subscribers').insert([{ phone_number: phone }]);
+        // 4. Duplicate prevention & database record insert
+        try {
+            const { data: existing, error: checkErr } = await supabaseClient
+                .from('sms_subscribers')
+                .select('phone_number')
+                .eq('phone_number', normalizedPhone)
+                .limit(1);
 
-        if (error) {
-            showToast(isTagalog ? "Bigo: " + error.message : "Error: " + error.message);
-        } else {
-            showToast(isTagalog ? "Matagumpay na naitala ang iyong numero." : "Contact successfully enrolled in alert system.");
-            document.getElementById('subPhone').value = "";
+            if (existing && existing.length > 0) {
+                showToast(isTagalog ? "Nakatala na ang numerong ito sa listahan." : "This number is already registered for alerts.");
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('sms_subscribers')
+                .insert([{ phone_number: normalizedPhone }]);
+
+            if (error) {
+                showToast(isTagalog ? "Bigo: " + error.message : "Error: " + error.message);
+            } else {
+                localStorage.setItem('abiso_last_sms_sub', now.toString());
+                showToast(isTagalog ? "Matagumpay na naitala ang iyong numero!" : "Phone number successfully registered for alerts!");
+                phoneInput.value = "";
+            }
+        } catch (e) {
+            console.error("SMS Registration error:", e);
+            showToast(isTagalog ? "Nagka-error sa pagproseso." : "Processing error occurred.");
         }
     };
 
@@ -1084,8 +1128,17 @@
         const text = document.getElementById('reportDesc').value.trim();
         const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
 
-        if (!text) {
-            showToast(isTagalog ? "Pakilagay muna ang detalye ng ulat." : "Please input incident details first.");
+        // Length validation
+        if (text.length < 10) {
+            showToast(isTagalog ? "Masyadong maikli ang ulat (minimum 10 titik)." : "Report details too short (minimum 10 characters).");
+            return;
+        }
+
+        // Rate limiting (120 seconds cooldown)
+        const lastReport = localStorage.getItem('abiso_last_report');
+        const now = Date.now();
+        if (lastReport && (now - parseInt(lastReport, 10)) < 120000) {
+            showToast(isTagalog ? "Naitatala na ang iyong ulat. Maghintay muna ng 2 minuto." : "Recent report logged. Please wait 2 minutes before sending another.");
             return;
         }
 
@@ -1095,11 +1148,14 @@
         }
 
         const fullReport = `[${category}] ${text}`;
-        const { error } = await supabaseClient.from('hazard_reports').insert([{ description: fullReport }]);
+        const { error } = await supabaseClient
+            .from('hazard_reports')
+            .insert([{ description: fullReport }]);
 
         if (error) {
             showToast(isTagalog ? "Bigo: " + error.message : "Error: " + error.message);
         } else {
+            localStorage.setItem('abiso_last_report', now.toString());
             showToast(isTagalog ? "Naipadala ang ulat sa DRRMO desk." : "Incident dispatch recorded with DRRMO desk.");
             document.getElementById('reportDesc').value = "";
         }
