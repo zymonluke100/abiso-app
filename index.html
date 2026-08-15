@@ -11,6 +11,9 @@
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#0038A8">
 
+    <!-- Embedded PWA Manifest -->
+    <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22ABISO%20Darangan%22%2C%22short_name%22%3A%22ABISO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230B0E14%22%2C%22theme_color%22%3A%22%230038A8%22%7D">
+
     <!-- External CDN Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -103,6 +106,14 @@
             border-left: 6px solid #963B00; box-shadow: 0 4px 12px rgba(211, 84, 0, 0.2);
         }
 
+        /* Audible Siren Active Banner */
+        .alarm-banner {
+            display: none; background: var(--danger); color: #FFFFFF; padding: 12px 18px; border-radius: 10px;
+            font-weight: 800; font-size: 13px; margin-bottom: 16px; justify-content: space-between; align-items: center;
+            border-left: 6px solid #7B1F17; animation: alarmPulse 1.5s infinite ease-in-out;
+        }
+        @keyframes alarmPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.85; } }
+
         /* Cards & Metrics */
         .card { background: var(--card); border-radius: 16px; padding: 22px; margin-bottom: 18px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
         .card-header { font-size: 11px; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: 1.1px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
@@ -134,6 +145,7 @@
         .call-btn { background: var(--rizal-blue); color: white; padding: 7px 14px; border-radius: 6px; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; }
         .sms-input, .bug-input, .select-input { width: 100%; padding: 13px 14px; border-radius: 8px; background: var(--bg); color: var(--text); border: 1.5px solid var(--rizal-bg); margin: 8px 0; font-weight: 600; font-size: 14px; outline: none; }
         .btn-main { width: 100%; padding: 14px; border-radius: 8px; border: none; background: var(--rizal-blue); color: white; font-weight: 800; cursor: pointer; font-size: 13px; letter-spacing: 0.5px; }
+        .btn-sec { width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid var(--rizal-blue); background: transparent; color: var(--rizal-blue); font-weight: 800; cursor: pointer; font-size: 12px; letter-spacing: 0.5px; margin-top: 8px; }
 
         .evac-card { padding: 14px; background: var(--rizal-bg); border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--safe); }
         .evac-title { font-weight: 800; font-size: 13px; margin: 0 0 4px 0; }
@@ -211,6 +223,16 @@
 
         <!-- WATER VIEW -->
         <main id="water" class="page active" role="tabpanel">
+            <!-- Critical Siren Active Alert Banner -->
+            <div id="audio-alarm-banner" class="alarm-banner">
+                <div>
+                    <span class="lang-en"><b>CRITICAL THRESHOLD REACHED:</b> Dike water level has reached evacuation point.</span>
+                    <span class="lang-tl"><b>MAPANGANIB NA ANTAS:</b> Umabot na sa puntong dapat lumikas ang tubig sa dike.</span>
+                </div>
+                <button onclick="silenceAlarm()" style="background:white; color:var(--danger); border:none; padding:5px 12px; border-radius:6px; font-weight:800; cursor:pointer; font-size:11px;">MUTE</button>
+            </div>
+
+            <!-- Staleness Detection Banner -->
             <div id="stale-alert-banner" class="stale-banner">
                 <div>
                     <div class="lang-en"><b>SYSTEM ADVISORY:</b> Sensor telemetry signal inactive. Displaying last confirmed reading from <span id="stale-time-val">--:--</span>.</div>
@@ -310,7 +332,7 @@
             </div>
         </section>
 
-        <!-- HARDWARE LOGS VIEW -->
+        <!-- HARDWARE LOGS & EXPORT VIEW -->
         <section id="history" class="page" role="tabpanel">
             <div class="dashboard-grid">
                 <div class="card">
@@ -330,8 +352,8 @@
                 </div>
 
                 <div class="card">
-                    <span class="card-header lang-en">System Diagnostics & Storage</span>
-                    <span class="card-header lang-tl">Pagsusuri sa Sistema at Imbakan</span>
+                    <span class="card-header lang-en">System Diagnostics & Export</span>
+                    <span class="card-header lang-tl">Pagsusuri at Pag-export ng Datos</span>
                     <div style="font-size:13px; color:var(--text-sub); line-height:1.7;">
                         <p class="lang-en">• <b>Supabase Realtime:</b> <span style="color:var(--safe); font-weight:bold;">Active & Synchronized</span></p>
                         <p class="lang-tl">• <b>Koneksiyon sa Supabase:</b> <span style="color:var(--safe); font-weight:bold;">Aktibo at Nakakabit</span></p>
@@ -342,6 +364,11 @@
                         <p class="lang-en">• <b>Station Identifier:</b> Darangan Dike Stand BD-01</p>
                         <p class="lang-tl">• <b>Pagkakakilanlan:</b> Darangan Dike Stand BD-01</p>
                     </div>
+
+                    <button class="btn-sec" onclick="exportTelemetryCSV()" type="button">
+                        <span class="lang-en">EXPORT TELEMETRY LOGS (CSV)</span>
+                        <span class="lang-tl">I-DOWNLOAD ANG TALAAN (CSV)</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -444,9 +471,50 @@
     }
 
     let lastPacketTime = null;
+    let alarmActive = false;
+    let alarmMuted = false;
+    let audioCtx = null;
 
     // ========================================================
-    // 2. UI NAVIGATION & THEMING
+    // 2. WEB AUDIO API SYNTHESIZED SIREN
+    // ========================================================
+    function playAlarmTone() {
+        if (alarmMuted) return;
+        try {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = 'sawtooth';
+            
+            // Alternating two-tone emergency frequency
+            osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+            osc.frequency.setValueAtTime(587.33, audioCtx.currentTime + 0.25); // D5
+            
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.5);
+        } catch (e) {
+            console.warn("Audio Context init required user interaction:", e);
+        }
+    }
+
+    window.silenceAlarm = function() {
+        alarmMuted = true;
+        document.getElementById('audio-alarm-banner').style.display = 'none';
+        showToast("Audio alert silenced for this session.");
+    };
+
+    // ========================================================
+    // 3. UI NAVIGATION & THEMING
     // ========================================================
     window.showToast = function(msg) {
         const container = document.getElementById('toast-container');
@@ -507,7 +575,41 @@
     };
 
     // ========================================================
-    // 3. CHARTS
+    // 4. CSV TELEMETRY EXPORT ENGINE
+    // ========================================================
+    window.exportTelemetryCSV = async function() {
+        showToast("Generating telemetry CSV export...");
+        let csvContent = "data:text/csv;charset=utf-8,ID,Timestamp,Water_Level_M,Air_PM25_AQI,Solar_Percent\n";
+        
+        try {
+            if (supabaseClient) {
+                const { data, error } = await supabaseClient
+                    .from('dike_data')
+                    .select('*')
+                    .order('id', { ascending: false })
+                    .limit(100);
+
+                if (!error && data && data.length > 0) {
+                    data.forEach(row => {
+                        csvContent += `${row.id},"${row.created_at}",${row.water},${row.air},${row.solar}\n`;
+                    });
+                }
+            }
+        } catch (e) {
+            console.warn("Using local cache for CSV export:", e);
+        }
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `ABISO_Darangan_Telemetry_${new Date().toISOString().slice(0,10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
+    // ========================================================
+    // 5. CHARTS & HISTORICAL TRENDS
     // ========================================================
     let lw = null, la = null, hw = null, ha = null;
 
@@ -581,7 +683,7 @@
     };
 
     // ========================================================
-    // 4. TELEMETRY & STALENESS ENGINE
+    // 6. TELEMETRY & STALENESS ENGINE
     // ========================================================
     function applyTelemetry(data) {
         if (!data) return;
@@ -613,23 +715,32 @@
         const wPill = document.getElementById('live-pill-w');
         const txtW_EN = document.getElementById('txt-pill-w-en');
         const txtW_TL = document.getElementById('txt-pill-w-tl');
+        const alarmBanner = document.getElementById('audio-alarm-banner');
         
         if (water >= 1.7) {
             wPill.style.background = 'var(--danger)';
             txtW_EN.innerText = "DIKE STATUS: CRITICAL (EVACUATE)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: PANGANIB (LUMIKAS)";
+            if (!alarmMuted) {
+                alarmBanner.style.display = 'flex';
+                playAlarmTone();
+            }
         } else if (water >= 1.4) {
             wPill.style.background = 'var(--warn)';
             txtW_EN.innerText = "DIKE STATUS: WARNING (PREPARE)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: BABALA (MAGHANDA)";
+            alarmBanner.style.display = 'none';
         } else if (water >= 1.1) {
             wPill.style.background = 'var(--alert)';
             txtW_EN.innerText = "DIKE STATUS: ALERT (WATCH)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: ALERTO (MAGMASID)";
+            alarmBanner.style.display = 'none';
         } else {
             wPill.style.background = 'var(--safe)';
             txtW_EN.innerText = "DIKE STATUS: NORMAL";
             txtW_TL.innerText = "KATAYUAN SA DIKE: NORMAL AT LIGTAS";
+            alarmBanner.style.display = 'none';
+            alarmMuted = false;
         }
     }
 
@@ -676,7 +787,7 @@
     setInterval(renderRelativeTime, 1000);
 
     // ========================================================
-    // 5. SUPABASE REALTIME SYNC
+    // 7. SUPABASE REALTIME SYNC
     // ========================================================
     function startSupabaseSync() {
         if (!supabaseClient) return;
@@ -700,7 +811,7 @@
             });
 
         supabaseClient
-            .channel('dike-telemetry-v5')
+            .channel('dike-telemetry-v6')
             .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'dike_data' }, (payload) => {
                 applyTelemetry(payload.new);
             })
@@ -718,7 +829,7 @@
     }
 
     // ========================================================
-    // 6. ACCURATE INLAND EVACUATION MAP & CORRIDORS
+    // 8. ACCURATE INLAND EVACUATION MAP & CORRIDORS
     // ========================================================
     let leafletMap = null;
     function initEvacMap() {
@@ -727,10 +838,9 @@
 
         if (!leafletMap) {
             try {
-                // Exact land coordinates for Barangay Darangan, Binangonan
-                const daranganStation = [14.4842, 121.1895]; // Dike Stand / Shoreline Access
-                const coveredCourt    = [14.4878, 121.1942]; // Brgy. Darangan Covered Court / Hall
-                const elemSchool      = [14.4925, 121.1980]; // Darangan Elementary School (Manila East Rd)
+                const daranganStation = [14.4842, 121.1895]; // Dike Stand
+                const coveredCourt    = [14.4878, 121.1942]; // Brgy. Covered Court
+                const elemSchool      = [14.4925, 121.1980]; // Darangan Elementary School
 
                 leafletMap = L.map('map-container', {
                     center: [14.4885, 121.1940],
@@ -743,7 +853,6 @@
                     maxZoom: 19
                 }).addTo(leafletMap);
 
-                // Facility Markers
                 L.marker(daranganStation).addTo(leafletMap)
                     .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Stand (Laguna de Bay Coast)")
                     .openPopup();
@@ -754,7 +863,6 @@
                 L.marker(elemSchool).addTo(leafletMap)
                     .bindPopup("<b>Darangan Elementary School</b><br>Primary High-Ground Evacuation Center<br><b>Capacity:</b> 450 Persons");
 
-                // Route 1: Inland corridor toward Elementary School
                 const routeToSchool = [
                     daranganStation,
                     [14.4860, 121.1920],
@@ -765,7 +873,6 @@
                 L.polyline(routeToSchool, { color: '#0038A8', weight: 5, dashArray: '8, 8' }).addTo(leafletMap)
                     .bindPopup("<b>Primary Evacuation Corridor</b><br>Inland road path toward Darangan Elementary School");
 
-                // Route 2: Access road to Covered Court & Barangay Hall
                 const routeToCourt = [
                     daranganStation,
                     [14.4860, 121.1920],
@@ -774,7 +881,6 @@
                 L.polyline(routeToCourt, { color: '#28A745', weight: 4, dashArray: '6, 6' }).addTo(leafletMap)
                     .bindPopup("<b>Secondary Route</b><br>Access road to Covered Court & Barangay Hall");
 
-                // Shoreline Hazard Risk Buffer
                 const floodRiskZone = [
                     [14.4815, 121.1870],
                     [14.4845, 121.1890],
@@ -801,7 +907,7 @@
     }
 
     // ========================================================
-    // 7. FORM SUBMISSIONS
+    // 9. FORM SUBMISSIONS
     // ========================================================
     window.registerSMS = async function() {
         const phone = document.getElementById('subPhone').value.trim();
@@ -852,6 +958,29 @@
             document.getElementById('reportDesc').value = "";
         }
     };
+
+    // ========================================================
+    // 10. INLINE PWA SERVICE WORKER REGISTRATION
+    // ========================================================
+    if ('serviceWorker' in navigator) {
+        const swBlob = new Blob([`
+            const CACHE_NAME = 'abiso-cache-v1';
+            const ASSETS = [
+                'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
+                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
+                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+            ];
+            self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
+            self.addEventListener('fetch', e => {
+                e.respondWith(caches.match(e.request).then(res => res || fetch(e.request).catch(() => caches.match(e.request))));
+            });
+        `], { type: 'application/javascript' });
+        
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(err => {
+            console.warn('ServiceWorker fallback:', err);
+        });
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
         initAllCharts();
