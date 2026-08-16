@@ -379,7 +379,7 @@
                     </button>
                 </div>
 
-                <!-- LIVE TELEMETRY TABLE (DESCENDING: NEWEST FIRST) -->
+                <!-- LIVE TELEMETRY TABLE (DESCENDING) -->
                 <div class="card full-width">
                     <div class="card-header">
                         <div>
@@ -437,7 +437,7 @@
                         </button>
                     </form>
 
-                    <!-- STEP 2: 4-Digit OTP Code Verification Input -->
+                    <!-- STEP 2: 4-Digit OTP Verification Input -->
                     <form id="sms-step-2" onsubmit="event.preventDefault(); verifyOTP();" style="display: none; margin-top: 10px;">
                         <div style="background: rgba(255,255,255,0.15); padding: 10px; border-radius: 8px; margin-bottom: 8px;">
                             <p style="font-size: 11px; margin: 0;">
@@ -446,7 +446,6 @@
                             </p>
                         </div>
                         
-                        <!-- WebOTP and iOS Auto-Fill Input Tag -->
                         <input 
                             type="text" 
                             inputmode="numeric" 
@@ -831,8 +830,101 @@
     };
 
     // ========================================================
-    // 6. TELEMETRY & STALENESS ENGINE
+    // 6. TIME FORMATTER & STALENESS ENGINE (NO MORE 1990m AGO)
     // ========================================================
+    function formatTimeAgo(diffSec, isTagalog) {
+        if (diffSec < 5) {
+            return isTagalog ? "Kararating lang" : "Just now";
+        }
+        if (diffSec < 60) {
+            return isTagalog ? `${diffSec}s ang nakalipas` : `${diffSec}s ago`;
+        }
+        
+        const diffMin = Math.floor(diffSec / 60);
+        if (diffMin < 60) {
+            return isTagalog ? `${diffMin}m ang nakalipas` : `${diffMin}m ago`;
+        }
+        
+        const diffHrs = Math.floor(diffMin / 60);
+        const remMin = diffMin % 60;
+        if (diffHrs < 24) {
+            if (remMin === 0) {
+                return isTagalog ? `${diffHrs} oras ang nakalipas` : `${diffHrs}h ago`;
+            }
+            return isTagalog ? `${diffHrs} oras at ${remMin}m ang nakalipas` : `${diffHrs}h ${remMin}m ago`;
+        }
+        
+        const diffDays = Math.floor(diffHrs / 24);
+        const remHrs = diffHrs % 24;
+        if (remHrs === 0) {
+            return isTagalog ? `${diffDays} araw ang nakalipas` : `${diffDays}d ago`;
+        }
+        return isTagalog ? `${diffDays} araw at ${remHrs} oras ang nakalipas` : `${diffDays}d ${remHrs}h ago`;
+    }
+
+    function renderRelativeTime() {
+        if (!lastPacketTime) return;
+
+        const now = Date.now();
+        const elapsedSec = Math.max(0, Math.floor((now - lastPacketTime) / 1000));
+        
+        const packetDate = new Date(lastPacketTime);
+        const timeStr = packetDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        const isToday = new Date().toDateString() === packetDate.toDateString();
+        const fullDateTimeStr = isToday 
+            ? timeStr 
+            : `${packetDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+        
+        const syncLabels = document.querySelectorAll('.sync-label');
+        const bannerEl = document.getElementById('stale-alert-banner');
+        const connPill = document.getElementById('conn-pill');
+        const staleTimeEn = document.getElementById('stale-time-val');
+        const staleTimeTl = document.getElementById('stale-time-val-tl');
+        const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
+
+        const readableElapsed = formatTimeAgo(elapsedSec, isTagalog);
+
+        if (elapsedSec >= 120) {
+            if (bannerEl) bannerEl.style.display = 'flex';
+            if (staleTimeEn) staleTimeEn.innerText = fullDateTimeStr;
+            if (staleTimeTl) staleTimeTl.innerText = fullDateTimeStr;
+            
+            if (connPill) {
+                connPill.classList.add('stale');
+                const enText = document.getElementById('conn-text-en');
+                const tlText = document.getElementById('conn-text-tl');
+                if (enText) enText.innerText = "STREAM: STALE / OFFLINE";
+                if (tlText) tlText.innerText = "KONEKSIYON: WALANG SENSOR";
+            }
+
+            syncLabels.forEach(lbl => {
+                lbl.innerHTML = `<span style="color:#D35400; font-weight:700;">${
+                    isTagalog 
+                        ? `Huling ulat: ${readableElapsed} (${fullDateTimeStr})` 
+                        : `Last telemetry sync: ${readableElapsed} (${fullDateTimeStr})`
+                }</span>`;
+            });
+        } else {
+            if (bannerEl) bannerEl.style.display = 'none';
+            if (connPill) {
+                connPill.classList.remove('stale');
+                connPill.classList.remove('offline');
+                const enText = document.getElementById('conn-text-en');
+                const tlText = document.getElementById('conn-text-tl');
+                if (enText) enText.innerText = "STREAM: LIVE";
+                if (tlText) tlText.innerText = "KONEKSIYON: AKTIBO";
+            }
+
+            syncLabels.forEach(lbl => {
+                lbl.innerText = isTagalog 
+                    ? `Huling ulat: ${readableElapsed} (${timeStr})` 
+                    : `Last telemetry sync: ${readableElapsed} (${timeStr})`;
+            });
+        }
+    }
+
+    setInterval(renderRelativeTime, 1000);
+
     function applyTelemetry(data) {
         if (!data) return;
 
@@ -860,7 +952,7 @@
             la.update('none');
         }
 
-        // Water Pill & Alert
+        // Water Pill
         const wPill = document.getElementById('live-pill-w');
         const txtW_EN = document.getElementById('txt-pill-w-en');
         const txtW_TL = document.getElementById('txt-pill-w-tl');
@@ -917,52 +1009,6 @@
             }
         }
     }
-
-    function renderRelativeTime() {
-        if (!lastPacketTime) return;
-
-        const now = Date.now();
-        const elapsedSec = Math.max(0, Math.floor((now - lastPacketTime) / 1000));
-        const timeStr = new Date(lastPacketTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-        
-        const syncLabels = document.querySelectorAll('.sync-label');
-        const bannerEl = document.getElementById('stale-alert-banner');
-        const connPill = document.getElementById('conn-pill');
-        const staleTimeEn = document.getElementById('stale-time-val');
-        const staleTimeTl = document.getElementById('stale-time-val-tl');
-        const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
-
-        if (elapsedSec >= 120) {
-            bannerEl.style.display = 'flex';
-            if (staleTimeEn) staleTimeEn.innerText = timeStr;
-            if (staleTimeTl) staleTimeTl.innerText = timeStr;
-            
-            connPill.classList.add('stale');
-            document.getElementById('conn-text-en').innerText = "STREAM: STALE / OFFLINE";
-            document.getElementById('conn-text-tl').innerText = "KONEKSIYON: WALANG SENSOR";
-
-            const elapsedMin = Math.floor(elapsedSec / 60);
-            syncLabels.forEach(lbl => {
-                lbl.innerHTML = `<span style="color:#D35400; font-weight:700;">${isTagalog ? `Huling ulat: ${elapsedMin}m na ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedMin}m ago (${timeStr})`}</span>`;
-            });
-        } else {
-            bannerEl.style.display = 'none';
-            connPill.classList.remove('stale');
-            connPill.classList.remove('offline');
-            document.getElementById('conn-text-en').innerText = "STREAM: LIVE";
-            document.getElementById('conn-text-tl').innerText = "KONEKSIYON: AKTIBO";
-
-            syncLabels.forEach(lbl => {
-                if (elapsedSec < 5) {
-                    lbl.innerText = isTagalog ? `Huling ulat: Kararating lang (${timeStr})` : `Last telemetry sync: Just now (${timeStr})`;
-                } else {
-                    lbl.innerText = isTagalog ? `Huling ulat: ${elapsedSec}s ang nakalipas (${timeStr})` : `Last telemetry sync: ${elapsedSec}s ago (${timeStr})`;
-                }
-            });
-        }
-    }
-
-    setInterval(renderRelativeTime, 1000);
 
     // ========================================================
     // 7. SUPABASE REALTIME SYNC
@@ -1068,7 +1114,7 @@
     }
 
     // ========================================================
-    // 9. REAL SMS OTP ENGINE WITH AUTO-FILL / WEBOTP API
+    // 9. RESILIENT SMS OTP REGISTRATION (FIXED ON CONFLICT)
     // ========================================================
     function startWebOTPListener() {
         if ('OTPCredential' in window) {
@@ -1091,7 +1137,7 @@
                     }
                 })
                 .catch(err => {
-                    console.log('WebOTP auto-read ignored or cancelled:', err);
+                    console.log('WebOTP auto-read ignored:', err);
                 });
             } catch (e) {
                 console.warn('WebOTP initialization:', e);
@@ -1133,7 +1179,6 @@
             return;
         }
 
-        // Generate 4-Digit OTP & 5-minute expiry
         const generatedOTP = Math.floor(1000 + Math.random() * 9000).toString();
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000).toISOString();
 
@@ -1141,17 +1186,37 @@
         btn.disabled = true;
 
         try {
-            const { error } = await supabaseClient
+            // Check if user already exists
+            const { data: existing } = await supabaseClient
                 .from('sms_subscribers')
-                .upsert({
-                    phone_number: phone,
-                    otp_code: generatedOTP,
-                    otp_expires_at: expiresAt,
-                    is_verified: false,
-                    otp_attempts: 0
-                }, { onConflict: 'phone_number' });
+                .select('id, phone_number')
+                .eq('phone_number', phone)
+                .maybeSingle();
 
-            if (error) throw error;
+            let saveErr = null;
+            if (existing) {
+                const { error: updErr } = await supabaseClient
+                    .from('sms_subscribers')
+                    .update({
+                        otp_code: generatedOTP,
+                        otp_expires_at: expiresAt,
+                        is_verified: false
+                    })
+                    .eq('phone_number', phone);
+                saveErr = updErr;
+            } else {
+                const { error: insErr } = await supabaseClient
+                    .from('sms_subscribers')
+                    .insert([{
+                        phone_number: phone,
+                        otp_code: generatedOTP,
+                        otp_expires_at: expiresAt,
+                        is_verified: false
+                    }]);
+                saveErr = insErr;
+            }
+
+            if (saveErr) throw saveErr;
 
             localStorage.setItem('abiso_last_sms_otp', now.toString());
             pendingVerificationPhone = phone;
@@ -1163,9 +1228,7 @@
 
             showToast(isTagalog ? `Naipadala ang OTP sa ${phone}` : `OTP code dispatched for ${phone}`);
             console.log(`[ABISO OTP DISPATCH] Phone: ${phone} | OTP: ${generatedOTP}`);
-            console.log(`[W3C WebOTP SMS Body]:\nYour ABISO alert verification code is: ${generatedOTP}.\n\n@zymonluke100.github.io #${generatedOTP}`);
 
-            // Start auto-fill listener on supported browsers
             startWebOTPListener();
 
         } catch (e) {
