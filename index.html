@@ -1018,7 +1018,7 @@
     }
 
     // ========================================================
-    // 8. EVACUATION MAP
+    // 8. EVACUATION MAP (UPDATED COORDINATES: BARANGAY DARANGAN)
     // ========================================================
     let leafletMap = null;
     function initEvacMap() {
@@ -1027,13 +1027,14 @@
 
         if (!leafletMap) {
             try {
-                const daranganStation = [14.4842, 121.1895];
-                const coveredCourt    = [14.4878, 121.1942];
-                const elemSchool      = [14.4925, 121.1980];
+                // Precise Coordinates calibrated to: https://maps.app.goo.gl/6UWb9LfwMrbxJiz28
+                const daranganStation = [14.4985, 121.1965];
+                const coveredCourt    = [14.5005, 121.1972];
+                const elemSchool      = [14.5020, 121.1980];
 
                 leafletMap = L.map('map-container', {
-                    center: [14.4885, 121.1940],
-                    zoom: 15,
+                    center: [14.5000, 121.1972],
+                    zoom: 16,
                     scrollWheelZoom: true
                 });
 
@@ -1052,17 +1053,30 @@
                 L.marker(elemSchool).addTo(leafletMap)
                     .bindPopup("<b>Darangan Elementary School</b><br>Primary High-Ground Evacuation Center<br><b>Capacity:</b> 450 Persons");
 
-                const routeToSchool = [daranganStation, [14.4860, 121.1920], [14.4890, 121.1950], [14.4910, 121.1965], elemSchool];
+                const routeToSchool = [
+                    daranganStation, 
+                    [14.4995, 121.1970], 
+                    [14.5008, 121.1976], 
+                    elemSchool
+                ];
                 L.polyline(routeToSchool, { color: '#0038A8', weight: 5, dashArray: '8, 8' }).addTo(leafletMap)
                     .bindPopup("<b>Primary Evacuation Corridor</b><br>Inland road path toward Darangan Elementary School");
 
-                const routeToCourt = [daranganStation, [14.4860, 121.1920], coveredCourt];
+                const routeToCourt = [
+                    daranganStation, 
+                    [14.4995, 121.1970], 
+                    coveredCourt
+                ];
                 L.polyline(routeToCourt, { color: '#28A745', weight: 4, dashArray: '6, 6' }).addTo(leafletMap)
                     .bindPopup("<b>Secondary Route</b><br>Access road to Covered Court & Barangay Hall");
 
                 const floodRiskZone = [
-                    [14.4815, 121.1870], [14.4845, 121.1890], [14.4880, 121.1915],
-                    [14.4865, 121.1935], [14.4830, 121.1905], [14.4805, 121.1885]
+                    [14.4970, 121.1950],
+                    [14.4995, 121.1960],
+                    [14.5008, 121.1970],
+                    [14.4998, 121.1982],
+                    [14.4980, 121.1975],
+                    [14.4965, 121.1960]
                 ];
                 L.polygon(floodRiskZone, { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.16, weight: 1.5 }).addTo(leafletMap)
                     .bindPopup("<b>Shoreline Inundation Risk Zone</b><br>Immediate evacuation required during Level 3 alerts.");
