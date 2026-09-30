@@ -7,18 +7,16 @@
     
     <!-- OpenGraph Disaster Share Meta -->
     <meta property="og:title" content="ABISO Darangan Dike Live Monitor">
-    <meta property="og:description" content="Live water level, air quality telemetry, and evacuation routing for Barangay Darangan, Binangonan Rizal.">
+    <meta property="og:description" content="Live water level, air quality telemetry, and disaster notification for Barangay Darangan, Binangonan Rizal.">
     <meta property="og:type" content="website">
     <meta name="theme-color" content="#0038A8">
 
     <!-- Embedded PWA Manifest -->
     <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22ABISO%20Darangan%22%2C%22short_name%22%3A%22ABISO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230B0E14%22%2C%22theme_color%22%3A%22%230038A8%22%7D">
 
-    <!-- External CDN Libraries -->
+    <!-- External CDN Libraries (Leaflet Removed) -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -147,11 +145,9 @@
         .btn-main { width: 100%; padding: 14px; border-radius: 8px; border: none; background: var(--rizal-blue); color: white; font-weight: 800; cursor: pointer; font-size: 13px; letter-spacing: 0.5px; }
         .btn-sec { width: 100%; padding: 12px; border-radius: 8px; border: 1.5px solid var(--rizal-blue); background: transparent; color: var(--rizal-blue); font-weight: 800; cursor: pointer; font-size: 12px; letter-spacing: 0.5px; margin-top: 8px; }
 
-        .evac-card { padding: 14px; background: var(--rizal-bg); border-radius: 10px; margin-bottom: 10px; border-left: 4px solid var(--safe); }
-        .evac-title { font-weight: 800; font-size: 13px; margin: 0 0 4px 0; }
-        .evac-desc { font-size: 12px; color: var(--text-sub); margin: 0; }
-
-        #map-container { height: 350px; width: 100%; border-radius: 12px; margin-top: 10px; z-index: 1; border: 1px solid rgba(0,0,0,0.1); }
+        .evac-card { padding: 16px; background: var(--rizal-bg); border-radius: 12px; margin-bottom: 12px; border-left: 5px solid var(--safe); }
+        .evac-title { font-weight: 800; font-size: 14px; margin: 0 0 6px 0; }
+        .evac-desc { font-size: 12px; color: var(--text-sub); margin: 0; line-height: 1.5; }
 
         #toast-container { position: fixed; top: 20px; right: 20px; z-index: 100000; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
         .toast { background: var(--card); color: var(--text); padding: 14px 20px; border-radius: 10px; box-shadow: 0 8px 24px rgba(0,0,0,0.15); font-size: 13px; font-weight: 700; border-left: 5px solid var(--rizal-blue); pointer-events: auto; animation: toastIn 0.3s ease-out; }
@@ -256,16 +252,24 @@
                 <div class="card">
                     <span class="card-header lang-en">Live Water Level Telemetry</span>
                     <span class="card-header lang-tl">Kasalukuyang Antas ng Tubig</span>
+                    
+                    <!-- Dike Structural Calibration Specs Banner -->
+                    <div style="background:var(--rizal-bg); padding:10px 14px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-sub);">
+                        <span><span class="lang-en">Dike Crest:</span><span class="lang-tl">Taas ng Dike:</span> <strong style="color:var(--text);">2.50m</strong></span>
+                        <span><span class="lang-en">Sensor Mount:</span><span class="lang-tl">Tuktok ng Sensor:</span> <strong style="color:var(--text);">3.00m</strong></span>
+                        <span><span class="lang-en">Buffer:</span><span class="lang-tl">Reserba:</span> <strong style="color:var(--danger);">0.30m</strong></span>
+                    </div>
+
                     <div style="color:var(--rizal-blue);"><span class="big-val" id="cur-w">0.82</span><span class="unit">m</span></div>
                     <div class="chart-box"><canvas id="liveWChart"></canvas></div>
                     
                     <div class="integrated-guide">
-                        <span class="card-header lang-en">Threshold Warning Guide</span>
-                        <span class="card-header lang-tl">Gabay sa Antas ng Babala</span>
-                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Normal (0.0 - 1.0m):</b><b class="lang-tl">Ligtas (0.0 - 1.0m):</b> <span class="lang-en">Safe water level. No flood threat.</span><span class="lang-tl">Ligtas ang antas ng tubig. Walang banta ng baha.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><div><b class="lang-en">Alert (1.1 - 1.3m):</b><b class="lang-tl">Alerto (1.1 - 1.3m):</b> <span class="lang-en">Water level rising. Stay alert.</span><span class="lang-tl">Tumataas ang tubig. Maging mapagmatyag.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.4 - 1.6m):</b><b class="lang-tl">Babala (1.4 - 1.6m):</b> <span class="lang-en">Prepare emergency grab bags.</span><span class="lang-tl">Ihanda ang emergency grab bag at kagamitan.</span></div></div>
-                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Critical (1.7m+):</b><b class="lang-tl">Panganib (1.7m+):</b> <span class="lang-en">Immediate evacuation required.</span><span class="lang-tl">Lumikas na po agad sa itinalagang evacuation center.</span></div></div>
+                        <span class="card-header lang-en">Calibrated Hazard Guide (2.5m Dike Crest)</span>
+                        <span class="card-header lang-tl">Gabay sa Antas ng Babala (2.5m Dike)</span>
+                        <div class="guide-row"><div class="dot" style="background:var(--safe)"></div><div><b class="lang-en">Normal (0.00 - 1.20m):</b><b class="lang-tl">Ligtas (0.00 - 1.20m):</b> <span class="lang-en">Safe water level. No flood threat.</span><span class="lang-tl">Ligtas ang antas ng tubig. Walang banta ng baha.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--alert)"></div><div><b class="lang-en">Alert (1.30 - 1.70m):</b><b class="lang-tl">Alerto (1.30 - 1.70m):</b> <span class="lang-en">Elevated channel volume. Tanods on standby.</span><span class="lang-tl">Tumataas ang tubig sa dike. Maging mapagmatyag.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><div><b class="lang-en">Warning (1.80 - 2.10m):</b><b class="lang-tl">Babala (1.80 - 2.10m):</b> <span class="lang-en">Freeboard reduced. Prepare grab bags and secure boats.</span><span class="lang-tl">Mababang freeboard. Ihanda ang emergency grab bag at bangka.</span></div></div>
+                        <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><div><b class="lang-en">Critical (2.20m+):</b><b class="lang-tl">Panganib (2.20m+):</b> <span class="lang-en">Within 0.30m of crest. Immediate evacuation required.</span><span class="lang-tl">Aapaw na ang tubig sa dike. Lumikas na po agad.</span></div></div>
                     </div>
                 </div>
 
@@ -322,6 +326,14 @@
                         <div class="guide-row"><div class="dot" style="background:var(--warn)"></div><p><b class="lang-en">101 - 150: Unhealthy (Sensitive).</b><b class="lang-tl">101 - 150: Hindi Ligtas sa May Sakit.</b> <span class="lang-en">Wear face masks along coastal corridors.</span><span class="lang-tl">Magsuot ng face mask habang dumaraan sa dike.</span></p></div>
                         <div class="guide-row"><div class="dot" style="background:var(--danger)"></div><p><b class="lang-en">151+: Unhealthy.</b><b class="lang-tl">151+: Mapanganib.</b> <span class="lang-en">High particulate density. Remain indoors.</span><span class="lang-tl">Mataas ang polusyon. Manatili sa loob ng tahanan.</span></p></div>
                     </div>
+
+                    <!-- Local Environmental Survey Findings Card -->
+                    <div style="background:var(--rizal-bg); padding:14px; border-radius:10px; margin-top:16px; font-size:12px; color:var(--text-sub); line-height:1.6; border-left:4px solid var(--air-color);">
+                        <strong style="color:var(--text); display:block; margin-bottom:4px;" class="lang-en">Local Pollution Sources (Darangan Shoreline):</strong>
+                        <strong style="color:var(--text); display:block; margin-bottom:4px;" class="lang-tl">Pinagmumulan ng Polusyon sa Darangan:</strong>
+                        <span class="lang-en">• Road construction aggregate dust and machinery exhaust.<br>• Household open waste burning (<em>siga</em>).<br>• Seasonal summer blue-green algae blooms (<em>liha</em>) releasing organic aerosols and sulfur odor.</span>
+                        <span class="lang-tl">• Alikabok mula sa ginagawang kalsada at usok ng trak.<br>• Pagsisiga ng basura ng mga kapitbahay.<br>• Pagkabulok ng lumot o liha kapag tag-araw na nagdudulot ng masangsang na amoy.</span>
+                    </div>
                 </div>
 
                 <div class="card">
@@ -354,7 +366,7 @@
                     <div class="track"><div class="fill" id="solarFill"></div></div>
                     
                     <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                        <div class="stat-box" style="padding:10px;"><span class="lang-en">Ultrasonic Sensor</span><span class="lang-tl">Sensor ng Tubig</span><b style="font-size:12px; color:var(--safe);">OPERATIONAL</b></div>
+                        <div class="stat-box" style="padding:10px;"><span class="lang-en">Water Sensor</span><span class="lang-tl">Sensor ng Tubig</span><b style="font-size:12px; color:var(--safe);">OPERATIONAL</b></div>
                         <div class="stat-box" style="padding:10px;"><span class="lang-en">PM2.5 Sensor</span><span class="lang-tl">Sensor ng Hangin</span><b style="font-size:12px; color:var(--safe);">OPERATIONAL</b></div>
                     </div>
                 </div>
@@ -417,10 +429,10 @@
             </div>
         </section>
 
-        <!-- EVACUATION & HELP VIEW -->
+        <!-- EVACUATION & HELP VIEW (MAP REMOVED) -->
         <section id="services" class="page" role="tabpanel">
             <div class="dashboard-grid">
-                <!-- 1-CLICK FRICTIONLESS & DEDUPLICATED SMS REGISTRATION CARD -->
+                <!-- SMS Registration -->
                 <div class="card" style="background:var(--rizal-blue); color:white;">
                     <h3 class="lang-en" style="font-size:16px;">SMS Early Warning Registration</h3>
                     <h3 class="lang-tl" style="font-size:16px;">Pagpapatala sa SMS Text Alert</h3>
@@ -444,25 +456,26 @@
                     <a href="tel:0284511647" class="contact-card"><div><b class="lang-en">Barangay Operations</b><b class="lang-tl">Bulwagan ng Barangay</b><br><small>Darangan DRRMO Desk</small></div><div class="call-btn"><span class="lang-en">CALL</span><span class="lang-tl">TAWAG</span></div></a>
                 </div>
 
+                <!-- Designated Evacuation Shelters (Clean Card List) -->
                 <div class="card full-width">
-                    <span class="card-header lang-en">Interactive Evacuation Route & Inundation Risk Map</span>
-                    <span class="card-header lang-tl">Mapa ng Evacuation Center, Rutang Ligtas at Panganib</span>
-                    <div id="map-container"></div>
+                    <span class="card-header lang-en">Designated Evacuation Shelters</span>
+                    <span class="card-header lang-tl">Itinalagang mga Likasan at Evacuation Center</span>
                     
-                    <div style="margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                    <div style="display:grid; grid-template-columns:1fr; gap:12px; margin-top:8px;">
                         <div class="evac-card">
-                            <p class="evac-title">1. Darangan Elementary School [Cap: 450]</p>
-                            <p class="evac-desc lang-en">Designated primary high-ground typhoon shelter.</p>
-                            <p class="evac-desc lang-tl">Pangunahing evacuation center sa mataas na lugar.</p>
+                            <p class="evac-title">1. Darangan Elementary School [Capacity: 450 Persons]</p>
+                            <p class="evac-desc lang-en">Designated primary high-ground typhoon evacuation shelter. Direct access via the main inland provincial road corridor.</p>
+                            <p class="evac-desc lang-tl">Pangunahing evacuation center sa mataas na lugar. Daanan sa kalsada papasok mula sa dike.</p>
                         </div>
-                        <div class="evac-card">
-                            <p class="evac-title">2. Barangay Covered Court [Cap: 200]</p>
-                            <p class="evac-desc lang-en">Relief staging and secondary distribution hub.</p>
-                            <p class="evac-desc lang-tl">Pangalawang sentro ng pamamahagi ng relief goods.</p>
+                        <div class="evac-card" style="border-left-color: var(--rizal-blue);">
+                            <p class="evac-title">2. Barangay Covered Court [Capacity: 200 Persons]</p>
+                            <p class="evac-desc lang-en">Secondary staging, medical first-aid triage, and municipal relief goods distribution hub.</p>
+                            <p class="evac-desc lang-tl">Pangalawang sentro ng pamamahagi ng tulong, first-aid, at relief goods.</p>
                         </div>
                     </div>
                 </div>
 
+                <!-- Incident Reporting -->
                 <div class="card full-width">
                     <span class="card-header lang-en">Report Incident or Inundation Hazard</span>
                     <span class="card-header lang-tl">Mag-ulat ng Panganib o Baha</span>
@@ -523,7 +536,7 @@
     let audioCtx = null;
 
     // ========================================================
-    // 2. MOBILE-UNLOCKED WEB AUDIO SIREN + VIBRATION ENGINE
+    // 2. WEB AUDIO SIREN + VIBRATION ENGINE
     // ========================================================
     function initMobileAudio() {
         if (!audioCtx) {
@@ -605,9 +618,6 @@
         if (mb) { mb.classList.add('active'); mb.setAttribute('aria-selected', 'true'); }
         if (sd) { sd.classList.add('active'); sd.setAttribute('aria-selected', 'true'); }
 
-        if (pageId === 'services') {
-            setTimeout(initEvacMap, 200);
-        }
         if (pageId === 'history') {
             setTimeout(loadTableLogs, 100);
         }
@@ -642,7 +652,7 @@
     };
 
     // ========================================================
-    // 4. CSV TELEMETRY EXPORT & TABLE LOGS (DESCENDING)
+    // 4. CSV TELEMETRY EXPORT & TABLE LOGS
     // ========================================================
     window.exportTelemetryCSV = async function() {
         showToast("Generating telemetry CSV export...");
@@ -690,10 +700,13 @@
 
             if (data && data.length > 0) {
                 tbody.innerHTML = data.map(row => {
-                    const isDanger = parseFloat(row.water) >= 1.7;
-                    const isWarn = parseFloat(row.water) >= 1.4;
-                    const statusColor = isDanger ? 'var(--danger)' : (isWarn ? 'var(--warn)' : 'var(--safe)');
-                    const statusLabel = isDanger ? 'Critical' : (isWarn ? 'Warning' : 'Normal');
+                    const waterVal = parseFloat(row.water);
+                    // Updated 2.5m dike threshold evaluations
+                    const isDanger = waterVal >= 2.20;
+                    const isWarn = waterVal >= 1.80;
+                    const isAlert = waterVal >= 1.30;
+                    const statusColor = isDanger ? 'var(--danger)' : (isWarn ? 'var(--warn)' : (isAlert ? 'var(--alert)' : 'var(--safe)'));
+                    const statusLabel = isDanger ? 'Critical' : (isWarn ? 'Warning' : (isAlert ? 'Alert' : 'Normal'));
 
                     return `
                         <tr style="border-bottom: 1px solid var(--nav-border); transition: background 0.2s;">
@@ -797,33 +810,25 @@
     // 6. TIME FORMATTER & STALENESS ENGINE
     // ========================================================
     function formatTimeAgo(diffSec, isTagalog) {
-        if (diffSec < 5) {
-            return isTagalog ? "Kararating lang" : "Just now";
-        }
-        if (diffSec < 60) {
-            return isTagalog ? `${diffSec}s ang nakalipas` : `${diffSec}s ago`;
-        }
+        if (diffSec < 5) return isTagalog ? "Kararating lang" : "Just now";
+        if (diffSec < 60) return isTagalog ? `${diffSec}s ang nakalipas` : `${diffSec}s ago`;
         
         const diffMin = Math.floor(diffSec / 60);
-        if (diffMin < 60) {
-            return isTagalog ? `${diffMin}m ang nakalipas` : `${diffMin}m ago`;
-        }
+        if (diffMin < 60) return isTagalog ? `${diffMin}m ang nakalipas` : `${diffMin}m ago`;
         
         const diffHrs = Math.floor(diffMin / 60);
         const remMin = diffMin % 60;
         if (diffHrs < 24) {
-            if (remMin === 0) {
-                return isTagalog ? `${diffHrs} oras ang nakalipas` : `${diffHrs}h ago`;
-            }
-            return isTagalog ? `${diffHrs} oras at ${remMin}m ang nakalipas` : `${diffHrs}h ${remMin}m ago`;
+            return remMin === 0 
+                ? (isTagalog ? `${diffHrs} oras ang nakalipas` : `${diffHrs}h ago`)
+                : (isTagalog ? `${diffHrs} oras at ${remMin}m ang nakalipas` : `${diffHrs}h ${remMin}m ago`);
         }
         
         const diffDays = Math.floor(diffHrs / 24);
         const remHrs = diffHrs % 24;
-        if (remHrs === 0) {
-            return isTagalog ? `${diffDays} araw ang nakalipas` : `${diffDays}d ago`;
-        }
-        return isTagalog ? `${diffDays} araw at ${remHrs} oras ang nakalipas` : `${diffDays}d ${remHrs}h ago`;
+        return remHrs === 0
+            ? (isTagalog ? `${diffDays} araw ang nakalipas` : `${diffDays}d ago`)
+            : (isTagalog ? `${diffDays} araw at ${remHrs} oras ang nakalipas` : `${diffDays}d ${remHrs}h ago`);
     }
 
     function renderRelativeTime() {
@@ -916,13 +921,14 @@
             la.update('none');
         }
 
-        // Water Pill
+        // Water Pill & Siren Trigger (2.5m Calibrated Thresholds)
         const wPill = document.getElementById('live-pill-w');
         const txtW_EN = document.getElementById('txt-pill-w-en');
         const txtW_TL = document.getElementById('txt-pill-w-tl');
         const alarmBanner = document.getElementById('audio-alarm-banner');
+        const numericWater = parseFloat(water);
         
-        if (water >= 1.7) {
+        if (numericWater >= 2.20) {
             wPill.style.background = 'var(--danger)';
             txtW_EN.innerText = "DIKE STATUS: CRITICAL (EVACUATE)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: PANGANIB (LUMIKAS)";
@@ -930,12 +936,12 @@
                 alarmBanner.style.display = 'flex';
                 playAlarmTone();
             }
-        } else if (water >= 1.4) {
+        } else if (numericWater >= 1.80) {
             wPill.style.background = 'var(--warn)';
             txtW_EN.innerText = "DIKE STATUS: WARNING (PREPARE)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: BABALA (MAGHANDA)";
             alarmBanner.style.display = 'none';
-        } else if (water >= 1.1) {
+        } else if (numericWater >= 1.30) {
             wPill.style.background = 'var(--alert)';
             txtW_EN.innerText = "DIKE STATUS: ALERT (WATCH)";
             txtW_TL.innerText = "KATAYUAN SA DIKE: ALERTO (MAGMASID)";
@@ -1018,81 +1024,7 @@
     }
 
     // ========================================================
-    // 8. EVACUATION MAP (UPDATED COORDINATES: BARANGAY DARANGAN)
-    // ========================================================
-    let leafletMap = null;
-    function initEvacMap() {
-        const container = document.getElementById('map-container');
-        if (!container || typeof L === 'undefined') return;
-
-        if (!leafletMap) {
-            try {
-                // Precise Coordinates calibrated to: https://maps.app.goo.gl/6UWb9LfwMrbxJiz28
-                const daranganStation = [14.4985, 121.1965];
-                const coveredCourt    = [14.5005, 121.1972];
-                const elemSchool      = [14.5020, 121.1980];
-
-                leafletMap = L.map('map-container', {
-                    center: [14.5000, 121.1972],
-                    zoom: 16,
-                    scrollWheelZoom: true
-                });
-
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 19
-                }).addTo(leafletMap);
-
-                L.marker(daranganStation).addTo(leafletMap)
-                    .bindPopup("<b>ABISO Station BD-01</b><br>Darangan Dike Stand (Laguna de Bay Coast)")
-                    .openPopup();
-
-                L.marker(coveredCourt).addTo(leafletMap)
-                    .bindPopup("<b>Barangay Covered Court</b><br>Secondary Staging & Relief Center<br><b>Capacity:</b> 200 Persons");
-
-                L.marker(elemSchool).addTo(leafletMap)
-                    .bindPopup("<b>Darangan Elementary School</b><br>Primary High-Ground Evacuation Center<br><b>Capacity:</b> 450 Persons");
-
-                const routeToSchool = [
-                    daranganStation, 
-                    [14.4995, 121.1970], 
-                    [14.5008, 121.1976], 
-                    elemSchool
-                ];
-                L.polyline(routeToSchool, { color: '#0038A8', weight: 5, dashArray: '8, 8' }).addTo(leafletMap)
-                    .bindPopup("<b>Primary Evacuation Corridor</b><br>Inland road path toward Darangan Elementary School");
-
-                const routeToCourt = [
-                    daranganStation, 
-                    [14.4995, 121.1970], 
-                    coveredCourt
-                ];
-                L.polyline(routeToCourt, { color: '#28A745', weight: 4, dashArray: '6, 6' }).addTo(leafletMap)
-                    .bindPopup("<b>Secondary Route</b><br>Access road to Covered Court & Barangay Hall");
-
-                const floodRiskZone = [
-                    [14.4970, 121.1950],
-                    [14.4995, 121.1960],
-                    [14.5008, 121.1970],
-                    [14.4998, 121.1982],
-                    [14.4980, 121.1975],
-                    [14.4965, 121.1960]
-                ];
-                L.polygon(floodRiskZone, { color: '#C0392B', fillColor: '#C0392B', fillOpacity: 0.16, weight: 1.5 }).addTo(leafletMap)
-                    .bindPopup("<b>Shoreline Inundation Risk Zone</b><br>Immediate evacuation required during Level 3 alerts.");
-
-            } catch (err) {
-                console.error("Leaflet initialization error:", err);
-            }
-        }
-        
-        setTimeout(() => {
-            if (leafletMap) leafletMap.invalidateSize();
-        }, 200);
-    }
-
-    // ========================================================
-    // 9. 1-CLICK INSTANT REGISTRATION & INCIDENT REPORT
+    // 8. 1-CLICK INSTANT REGISTRATION & INCIDENT REPORT
     // ========================================================
     window.registerSMS = async function() {
         const phoneInput = document.getElementById('subPhone');
@@ -1100,21 +1032,21 @@
         const isTagalog = document.documentElement.getAttribute('data-lang') === 'tl';
         const btn = document.getElementById('btn-register-sms');
 
-        // 1. Format validation (11-digit PH mobile)
+        // Format validation (11-digit PH mobile)
         const phRegex = /^09\d{9}$/;
         if (!phRegex.test(phone)) {
             showToast(isTagalog ? "Maling format. Gamitin ang 09XXXXXXXXX (11 digits)." : "Invalid format. Use 09XXXXXXXXX (11 digits).");
             return;
         }
 
-        // 2. Reject obvious troll patterns
+        // Reject obvious troll patterns
         const trollPatterns = [/^09(\d)\1{8}$/, /^09123456789$/, /^09876543210$/, /^09000000000$/, /^09999999999$/];
         if (trollPatterns.some(pat => pat.test(phone))) {
             showToast(isTagalog ? "Hindi tinatanggap ang dummy o pekeng numero." : "Placeholder or dummy numbers are not allowed.");
             return;
         }
 
-        // 3. Client rate limiting (60 seconds)
+        // Client rate limiting (60 seconds)
         const lastSub = localStorage.getItem('abiso_last_sms_sub');
         const now = Date.now();
         if (lastSub && (now - parseInt(lastSub, 10)) < 60000) {
@@ -1132,7 +1064,7 @@
         btn.disabled = true;
 
         try {
-            // 4. Check for duplicate number
+            // Check for duplicate number
             const { data: existing } = await supabaseClient
                 .from('sms_subscribers')
                 .select('phone_number')
@@ -1148,7 +1080,7 @@
                 return;
             }
 
-            // 5. Insert new subscriber
+            // Insert new subscriber
             const { error: insertErr } = await supabaseClient
                 .from('sms_subscribers')
                 .insert([{ phone_number: phone, is_verified: true }]);
@@ -1205,16 +1137,14 @@
     };
 
     // ========================================================
-    // 10. INLINE PWA SERVICE WORKER REGISTRATION
+    // 9. INLINE PWA SERVICE WORKER REGISTRATION
     // ========================================================
     if ('serviceWorker' in navigator) {
         const swBlob = new Blob([`
-            const CACHE_NAME = 'abiso-cache-v1';
+            const CACHE_NAME = 'abiso-cache-v2';
             const ASSETS = [
                 'https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js',
-                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2',
-                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-                'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js'
+                'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
             ];
             self.addEventListener('install', e => e.waitUntil(caches.open(CACHE_NAME).then(c => c.addAll(ASSETS))));
             self.addEventListener('fetch', e => {
