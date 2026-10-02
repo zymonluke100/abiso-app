@@ -14,7 +14,7 @@
     <!-- Embedded PWA Manifest -->
     <link rel="manifest" href="data:application/manifest+json;utf-8,%7B%22name%22%3A%22ABISO%20Darangan%22%2C%22short_name%22%3A%22ABISO%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230B0E14%22%2C%22theme_color%22%3A%22%230038A8%22%7D">
 
-    <!-- External CDN Libraries (Leaflet Removed) -->
+    <!-- External CDN Libraries -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
@@ -256,7 +256,7 @@
                     <!-- Dike Structural Calibration Specs Banner -->
                     <div style="background:var(--rizal-bg); padding:10px 14px; border-radius:10px; margin-bottom:12px; display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-sub);">
                         <span><span class="lang-en">Dike Crest:</span><span class="lang-tl">Taas ng Dike:</span> <strong style="color:var(--text);">2.50m</strong></span>
-                        <span><span class="lang-en">Sensor Mount:</span><span class="lang-tl">Tuktok ng Sensor:</span> <strong style="color:var(--text);">3.00m</strong></span>
+                        <span><span class="lang-en">Sensor Mount:</span><span class="lang-tl">Tuktok ng Sensor:</span> <strong style="color:var(--text);">2.80m</strong></span>
                         <span><span class="lang-en">Buffer:</span><span class="lang-tl">Reserba:</span> <strong style="color:var(--danger);">0.30m</strong></span>
                     </div>
 
@@ -429,7 +429,7 @@
             </div>
         </section>
 
-        <!-- EVACUATION & HELP VIEW (MAP REMOVED) -->
+        <!-- EVACUATION & HELP VIEW -->
         <section id="services" class="page" role="tabpanel">
             <div class="dashboard-grid">
                 <!-- SMS Registration -->
@@ -456,7 +456,7 @@
                     <a href="tel:0284511647" class="contact-card"><div><b class="lang-en">Barangay Operations</b><b class="lang-tl">Bulwagan ng Barangay</b><br><small>Darangan DRRMO Desk</small></div><div class="call-btn"><span class="lang-en">CALL</span><span class="lang-tl">TAWAG</span></div></a>
                 </div>
 
-                <!-- Designated Evacuation Shelters (Clean Card List) -->
+                <!-- Designated Evacuation Shelters -->
                 <div class="card full-width">
                     <span class="card-header lang-en">Designated Evacuation Shelters</span>
                     <span class="card-header lang-tl">Itinalagang mga Likasan at Evacuation Center</span>
@@ -668,7 +668,7 @@
 
                 if (!error && data && data.length > 0) {
                     data.forEach(row => {
-                        csvContent += `${row.id},"${row.created_at}",${row.water},${row.air},${row.solar}\n`;
+                        csvContent += `${row.id},"${row.created_at}",${row.water_depth_m !== undefined ? row.water_depth_m : row.water},${row.air},${row.solar}\n`;
                     });
                 }
             }
@@ -700,7 +700,7 @@
 
             if (data && data.length > 0) {
                 tbody.innerHTML = data.map(row => {
-                    const waterVal = parseFloat(row.water);
+                    const waterVal = parseFloat(row.water_depth_m !== undefined ? row.water_depth_m : row.water);
                     // Updated 2.5m dike threshold evaluations
                     const isDanger = waterVal >= 2.20;
                     const isWarn = waterVal >= 1.80;
@@ -712,7 +712,7 @@
                         <tr style="border-bottom: 1px solid var(--nav-border); transition: background 0.2s;">
                             <td style="padding: 10px 8px; font-weight: 700;">#${row.id}</td>
                             <td style="padding: 10px 8px; color: var(--text-sub);">${new Date(row.created_at).toLocaleString()}</td>
-                            <td style="padding: 10px 8px; font-weight: 800; color: var(--rizal-blue);">${parseFloat(row.water).toFixed(2)}m</td>
+                            <td style="padding: 10px 8px; font-weight: 800; color: var(--rizal-blue);">${waterVal.toFixed(2)}m</td>
                             <td style="padding: 10px 8px; font-weight: 800; color: var(--air-color);">${row.air} AQI</td>
                             <td style="padding: 10px 8px; font-weight: 700; color: var(--solar-color);">${row.solar || 98}%</td>
                             <td style="padding: 10px 8px;">
@@ -901,7 +901,7 @@
         localStorage.setItem('abiso_last_telemetry', JSON.stringify(data));
         renderRelativeTime();
 
-        const water = parseFloat(data.water !== undefined ? data.water : 0.82).toFixed(2);
+        const water = parseFloat(data.water_depth_m !== undefined ? data.water_depth_m : (data.water !== undefined ? data.water : 0.82)).toFixed(2);
         const air = parseInt(data.air !== undefined ? data.air : 22, 10);
         const solar = Math.min(100, Math.max(0, parseInt(data.solar !== undefined ? data.solar : 98, 10)));
 
